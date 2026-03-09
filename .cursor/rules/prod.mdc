@@ -1,0 +1,275 @@
+---
+alwaysApply: true
+---
+# SKILL: Production Deployment of AI Agent Systems
+
+> Source: *Building AI Agents with LLMs, RAG, and Knowledge Graphs* — Raieli & Iuculano (Packt, 2025), Chapter 10
+
+---
+
+## 1. Agent Application Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│  FRONTEND (Streamlit / React / FastAPI)              │
+│  User input → display results → session state        │
+└────────────────────────┬────────────────────────────┘
+                         │ HTTP / WebSocket
+┌────────────────────────▼────────────────────────────┐
+│  BACKEND (FastAPI / LangServe)                       │
+│  Agent orchestration, tool routing, session mgmt     │
+└────────┬──────────────────────────────┬─────────────┘
+         │                              │
+┌────────▼─────────┐        ┌──────────▼──────────────┐
+│  LLM API         │        │  Vector DB / Graph DB    │
+│  (OpenAI/Claude/ │        │  (Chroma/Pinecone/Neo4j) │
+│   Ollama local)  │        └─────────────────────────┘
+└──────────────────┘
+```
+
+---
+
+## 2. Streamlit for Rapid Prototyping
+
+### Core Patterns
+```python
+import streamlit as st
+
+# Session state for conversation history
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Display chat history
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
+# User input
+if prompt := st.chat_input("Ask me anything"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            response = agent.run(prompt)  # Your agent call
+        st.markdown(response)
+
+    st.session_state.messages.append({"role": "assistant", "content": response})
+
+# Caching expensive operations
+@st.cache_resource
+def load_vector_db():
+    return Chroma(persist_directory="./db", embedding_function=embeddings)
+```
+
+### Key Streamlit Best Practices
+- Use `@st.cache_resource` for models and DB connections (load once, reuse)
+- Use `@st.cache_data` for data loading functions
+- Use `st.session_state` for user session memory
+- Use `st.spinner()` for long-running operations
+
+---
+
+## 3. Asynchronous Programming
+
+Essential for high-throughput agent systems handling concurrent users:
+
+```python
+import asyncio
+from langchain.agents import AgentExecutor
+
+# Async agent execution
+async def process_query(query: str) -> str:
+    result = await agent_executor.ainvoke({"input": query})
+    return result["output"]
+
+# Concurrent execution of multiple tasks
+async def run_parallel_agents(queries: list[str]) -> list[str]:
+    tasks = [process_query(q) for q in queries]
+    return await asyncio.gather(*tasks)
+
+# Async FastAPI endpoint
+from fastapi import FastAPI
+app = FastAPI()
+
+@app.post("/query")
+async def query_endpoint(request: QueryRequest):
+    result = await process_query(request.query)
+    return {"response": result}
+```
+
+### asyncio Patterns for Agents
+| Pattern | Use Case |
+|---------|---------|
+| `asyncio.gather()` | Parallel independent tool calls |
+| `asyncio.create_task()` | Fire-and-forget background tasks |
+| `asyncio.Queue` | Producer-consumer for streaming results |
+| `async with` context | Async DB connections, HTTP sessions |
+| `asyncio.timeout()` | Prevent hanging on slow LLM calls |
+
+---
+
+## 4. Containerisation with Docker
+
+### Agent Service Dockerfile
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application
+COPY . .
+
+# Expose port
+EXPOSE 8080
+
+# Run with uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+```
+
+### Docker Compose for Full Stack
+```yaml
+version: '3.8'
+services:
+  agent-api:
+    build: ./api
+    ports:
+      - "8080:8080"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NEO4J_URI=bolt://neo4j:7687
+    depends_on:
+      - neo4j
+      - vector-db
+
+  neo4j:
+    image: neo4j:5
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+
+  vector-db:
+    image: chromadb/chroma
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+
+volumes:
+  neo4j_data:
+  chroma_data:
+```
+
+### Kubernetes Essentials
+- Wrap Docker containers in **Pods**
+- Use **Deployments** for stateless agent APIs (horizontal scaling)
+- Use **StatefulSets** for databases (Neo4j, vector stores)
+- Use **Services** for stable internal DNS
+- Use **Ingress** for external routing
+
+---
+
+## 5. MLOps for LLM Agents
+
+### Model Development Lifecycle
+```
+Data Collection → Preprocessing → Model Training/Fine-tuning
+      ↑                                        ↓
+Monitoring ← Production ← Evaluation ← Model Testing
+```
+
+### Inference Optimisation
+| Technique | Description | Speedup |
+|-----------|-------------|---------|
+| **Quantisation** (INT8/INT4) | Reduce weight precision | 2–4x memory reduction |
+| **ONNX export** | Hardware-agnostic inference format | Faster cross-platform |
+| **vLLM** | Paged attention for batched inference | High throughput |
+| **TensorRT** | NVIDIA-optimised inference | GPU-specific speedup |
+| **Speculative decoding** | Draft model + verifier | Lower latency |
+
+### Handling Production Errors
+```python
+import time
+from functools import wraps
+
+def retry_with_backoff(max_retries=3, base_delay=1.0):
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    return await func(*args, **kwargs)
+                except RateLimitError:
+                    if attempt == max_retries - 1:
+                        raise
+                    delay = base_delay * (2 ** attempt)
+                    await asyncio.sleep(delay)
+        return wrapper
+    return decorator
+
+@retry_with_backoff(max_retries=3)
+async def call_llm(prompt: str) -> str:
+    return await llm.apredict(prompt)
+```
+
+---
+
+## 6. Security for Production AI Agents
+
+| Threat | Mitigation |
+|--------|-----------|
+| **Prompt injection** | Validate and sanitise all user inputs; use system prompt guards |
+| **Tool misuse** | Restrict tool permissions; validate tool outputs |
+| **Data exfiltration** | Restrict agent memory access; audit logs |
+| **API key exposure** | Environment variables; secrets manager (AWS Secrets, Vault) |
+| **Insecure tool execution** | Sandbox code execution (Docker containers, E2B) |
+| **PII in logs** | Scrub logs of personally identifiable information |
+
+---
+
+## 7. Observability and Monitoring
+
+### Structured Logging Pattern
+```python
+import structlog
+
+logger = structlog.get_logger()
+
+async def agent_invoke(query: str, session_id: str):
+    logger.info("agent.start", session_id=session_id, query=query)
+    start_time = time.time()
+
+    try:
+        result = await agent.ainvoke({"input": query})
+        duration = time.time() - start_time
+        logger.info("agent.success",
+                    session_id=session_id,
+                    duration_ms=duration * 1000,
+                    token_usage=result.get("token_usage"))
+        return result
+    except Exception as e:
+        logger.error("agent.error", session_id=session_id, error=str(e))
+        raise
+```
+
+### Key Metrics to Track
+- Latency (p50, p95, p99)
+- Token consumption per request
+- Tool call success/failure rate
+- RAG retrieval quality (context relevance)
+- LLM error rate (rate limit, context overflow)
+
+---
+
+## 8. Practice Tasks
+- [ ] Build a Streamlit chat interface with session memory for a LangChain agent
+- [ ] Wrap agent in FastAPI with async endpoints; load test with 100 concurrent requests
+- [ ] Containerise the full stack (API + Neo4j + vector DB) with Docker Compose
+- [ ] Implement retry with exponential backoff for LLM rate limit errors
+- [ ] Add structured logging to all agent calls; build a simple dashboard
+- [ ] Apply INT8 quantisation to a local LLaMA model and benchmark latency

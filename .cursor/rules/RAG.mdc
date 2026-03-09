@@ -1,0 +1,168 @@
+---
+alwaysApply: true
+---
+# SKILL: RAG Systems (Naive, Advanced, and Modular)
+
+> Source: *Building AI Agents with LLMs, RAG, and Knowledge Graphs* — Raieli & Iuculano (Packt, 2025), Chapters 5 & 6
+
+---
+
+## 1. Why RAG?
+
+LLMs have a knowledge cutoff and hallucinate when asked about unknown or recent facts. RAG (Retrieval-Augmented Generation) solves this by retrieving relevant external documents at inference time and injecting them into the prompt as context.
+
+**RAG vs. Fine-tuning trade-offs:**
+| Aspect | RAG | Fine-tuning |
+|--------|-----|-------------|
+| Cost | Lower (retrieval only) | Higher (GPU training) |
+| Update frequency | Real-time (update the DB) | Requires retraining |
+| Knowledge style | External, explicit | Internalised |
+| Hallucination risk | Lower (grounded) | Still possible |
+| Accuracy requirement | Retrieval must be precise | Depends on training data quality |
+
+---
+
+## 2. Naive RAG Pipeline
+
+```
+User Query
+    │
+    ▼
+[Embed Query] ──► Vector DB ──► [Top-K Chunks]
+                                      │
+                                      ▼
+                               [Inject into Prompt]
+                                      │
+                                      ▼
+                                   LLM → Answer
+```
+
+### Steps
+1. **Data ingestion**: Load documents (PDF, HTML, DB)
+2. **Chunking**: Split documents into fixed-size or semantic chunks
+3. **Embedding**: Encode chunks with an embedding model (e.g., `text-embedding-ada-002`, `sentence-transformers`)
+4. **Index**: Store embeddings in a vector database
+5. **Retrieval**: Embed user query → cosine similarity search → top-K chunks
+6. **Augmentation**: Prepend retrieved chunks to prompt
+7. **Generation**: LLM generates grounded response
+
+### Naive RAG Problems
+- Stale/duplicate chunks
+- Retrieved chunks may be irrelevant if query is ambiguous
+- Context window overflow with too many chunks
+- No feedback mechanism to improve retrieval
+
+---
+
+## 3. Advanced RAG Pipeline
+
+### Indexing Enhancements
+| Technique | Description |
+|-----------|-------------|
+| **Hierarchical indexing** | Index at multiple granularities (document → section → sentence) |
+| **HyDE (Hypothetical Document Embeddings)** | LLM generates a hypothetical answer, embed that for retrieval |
+| **Context enrichment** | Store surrounding sentences/metadata with each chunk |
+
+### Query Transformation
+| Technique | Description |
+|-----------|-------------|
+| **Query rewriting** | Rephrase ambiguous query before retrieval |
+| **Query expansion** | Generate multiple query variants, retrieve for each |
+| **Query routing** | Direct query to appropriate index or data source |
+| **Step-back prompting** | Ask a more general question first to retrieve background |
+
+### Retrieval Enhancements
+| Technique | Description |
+|-----------|-------------|
+| **Hybrid search** | Combine dense (embedding) + sparse (BM25/TF-IDF) retrieval |
+| **Reranking** | Cross-encoder reranks top-K results for relevance |
+| **MMR (Maximal Marginal Relevance)** | Balance relevance and diversity in results |
+
+### Generation Enhancements
+| Technique | Description |
+|-----------|-------------|
+| **Response optimisation** | Compress/summarise retrieved context before injection |
+| **Self-RAG** | LLM decides when to retrieve and evaluates its own output |
+| **CRAG (Corrective RAG)** | External evaluator corrects low-quality retrieved documents |
+
+---
+
+## 4. Embedding Strategies
+
+### Chunking Best Practices
+| Strategy | When to Use |
+|----------|-------------|
+| Fixed-size (512 tokens, 10% overlap) | General purpose, predictable performance |
+| Sentence-level | QA tasks where granularity matters |
+| Semantic chunking | Group sentences by topic shift |
+| Document-level | Summary retrieval tasks |
+
+### Embedding Model Selection
+- Use **same model** for indexing and query encoding
+- Domain-specific embeddings outperform generic ones for specialised corpora
+- Dimension tradeoff: higher dimension = better accuracy but slower search
+
+---
+
+## 5. Vector Databases
+
+| Database | Highlights |
+|----------|------------|
+| **Pinecone** | Managed, serverless, production-ready |
+| **Weaviate** | Open-source, hybrid search built-in |
+| **Qdrant** | Rust-based, fast, supports payload filtering |
+| **Chroma** | Lightweight, great for prototyping |
+| **FAISS** | Facebook's library, in-memory, no persistence |
+| **Neo4j** | Graph DB with vector search — enables GraphRAG |
+
+---
+
+## 6. RAG Evaluation Framework
+
+```
+RAG Triad (RAGAS):
+  ├── Context Relevance:  Are retrieved chunks relevant to the query?
+  ├── Answer Faithfulness: Is the answer grounded in the context?
+  └── Answer Relevance:   Does the answer address the user's question?
+```
+
+**Key metrics:**
+- Precision@K / Recall@K for retrieval quality
+- Faithfulness score (using LLM-as-judge)
+- BLEU / ROUGE for answer quality (limited utility for open-ended QA)
+
+---
+
+## 7. Scalability and Production Considerations
+
+| Concern | Solution |
+|---------|----------|
+| Large corpora | Parallel embedding pipelines; batch indexing |
+| Real-time updates | Incremental indexing; streaming ingestion |
+| Multi-tenancy | Namespace/collection isolation per user |
+| Security & PII | Chunk-level access control; PII scrubbing pre-index |
+| Latency | Cache common queries; async retrieval |
+| Observability | Log query, retrieved chunks, LLM response end-to-end |
+
+---
+
+## 8. Modular RAG
+
+Decomposes the pipeline into swappable modules:
+```
+[Routing] → [Indexing] → [Retrieval] → [Reranking] → [Generation] → [Evaluation]
+```
+Each module can be replaced independently. This enables:
+- A/B testing of retrieval strategies
+- Independent scaling of components
+- Graceful fallback when one module underperforms
+
+---
+
+## 9. Practice Tasks
+- [ ] Build naive RAG pipeline with LangChain + Chroma on a PDF corpus
+- [ ] Implement HyDE: generate hypothetical answer, embed it, compare retrieval quality to standard query embedding
+- [ ] Add hybrid search (BM25 + dense) and measure recall improvement
+- [ ] Build a reranking step using a cross-encoder model
+- [ ] Evaluate pipeline with RAGAS: context relevance, faithfulness, answer relevance
+- [ ] Build a movie recommendation agent using RAG (from book Chapter 5 project)

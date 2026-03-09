@@ -1,0 +1,167 @@
+---
+alwaysApply: true
+---
+# SKILL: Multi-Agent Systems (MAS)
+
+> Source: *Building AI Agents with LLMs, RAG, and Knowledge Graphs* — Raieli & Iuculano (Packt, 2025), Chapters 4, 9
+
+---
+
+## 1. Why Multi-Agent Systems?
+
+Single agents are limited by:
+- Context window size
+- Generalisation vs. specialisation tradeoff
+- Single point of failure
+- Sequential bottleneck
+
+**MAS advantages:**
+- Division of labour: specialised agents per subtask
+- Parallelisation of independent subtasks
+- Redundancy: multiple agents vote or cross-check
+- Scalability: distribute work across multiple model instances
+
+---
+
+## 2. MAS Architecture Patterns
+
+### Cooperative MAS
+Agents collaborate toward a shared goal:
+```
+Orchestrator Agent
+   ├── Research Agent (web search, document retrieval)
+   ├── Analysis Agent (data processing, summarisation)
+   ├── Code Agent (code generation, execution)
+   └── Writer Agent (report generation)
+```
+
+### Debate / Adversarial MAS
+Agents take opposing positions and critique each other:
+```
+Proposer Agent → Generates answer
+Critic Agent   → Challenges answer
+Judge Agent    → Evaluates and selects best position
+```
+
+### Hierarchical MAS
+```
+Manager Agent
+  ├── Sub-manager Agent
+  │     ├── Worker Agent A
+  │     └── Worker Agent B
+  └── Worker Agent C
+```
+
+### Pipeline MAS
+Agents in a sequential chain, each processing previous agent's output.
+
+---
+
+## 3. Agent Coordination Strategies
+
+| Strategy | Description | Tradeoffs |
+|----------|-------------|-----------|
+| **Majority voting** | Multiple agents solve same task; take majority answer | Simple, robust — higher compute cost |
+| **Role assignment** | Each agent has a fixed specialised role | Efficient — need good role design |
+| **Dynamic delegation** | Orchestrator delegates subtasks dynamically | Flexible — complex orchestration logic |
+| **Market-based** | Agents bid for tasks based on capability | Self-organising — difficult to implement |
+| **Blackboard** | Shared state repository all agents read/write | Good for async — synchronisation complexity |
+
+---
+
+## 4. Notable MAS Frameworks
+
+### AutoGen (Microsoft)
+```python
+from autogen import AssistantAgent, UserProxyAgent
+
+assistant = AssistantAgent(
+    name="assistant",
+    llm_config={"model": "gpt-4"}
+)
+
+user_proxy = UserProxyAgent(
+    name="user_proxy",
+    human_input_mode="NEVER",
+    code_execution_config={"work_dir": "coding"}
+)
+
+user_proxy.initiate_chat(
+    assistant,
+    message="Write a Python script to analyse CSV data and plot results"
+)
+```
+
+### HuggingGPT Pattern
+1. LLM as controller parses user request
+2. Selects appropriate specialised models (Hugging Face Hub)
+3. Executes models in sequence/parallel
+4. Aggregates outputs → final response
+
+### Key MAS Examples from Literature
+| System | Domain | Agents |
+|--------|--------|--------|
+| **ChemCrow** | Chemistry | LLM + 18 chemistry tools |
+| **ChemAgent** | Drug discovery | Multi-LLM collaboration |
+| **Multi-agent Law** | Legal analysis | Researcher + Analyst + Writer |
+| **Multi-agent Healthcare** | Medical QA | Diagnosis + Treatment + Evidence agents |
+| **Generative Agents (Park et al.)** | Social simulation | 25 agents in Sims-like world |
+
+---
+
+## 5. Business Deployment Paradigms
+
+| Paradigm | Description | Example |
+|----------|-------------|---------|
+| **SaaS** | Hosted service, user pays subscription | ChatGPT Plus |
+| **MaaS** (Model-as-a-Service) | Expose model via API, pay per token | OpenAI API, Anthropic API |
+| **DaaS** (Data-as-a-Service) | Monetise processed data/insights | Bloomberg Terminal AI |
+| **RaaS** (Results-as-a-Service) | Deliver outputs/decisions, not models | AI-generated reports |
+
+---
+
+## 6. Inter-Agent Communication Design
+
+### Message Schema (standardised)
+```python
+{
+    "sender": "research_agent",
+    "recipient": "writer_agent",
+    "task_id": "uuid-1234",
+    "message_type": "task_result",
+    "content": "Here are the 5 key findings from the research...",
+    "metadata": {
+        "sources": ["url1", "url2"],
+        "confidence": 0.87,
+        "timestamp": "2025-03-07T10:30:00Z"
+    }
+}
+```
+
+### Conversation Patterns
+- **Ordered (sequential)**: Each agent processes in turn — deterministic, easier to debug
+- **Unordered (asynchronous)**: Agents respond when ready — faster, harder to coordinate
+- **Group chat**: All agents see all messages — enables emergent coordination
+
+---
+
+## 7. MAS Failure Modes and Mitigations
+
+| Failure Mode | Mitigation |
+|-------------|------------|
+| Hallucination cascade | Each agent validates previous agent's output |
+| Infinite loops | Max iteration limits + convergence checks |
+| Context overflow | Summarise intermediate results between agents |
+| Agent conflict | Arbitration agent or majority voting |
+| Capability mismatch | Capability registry + routing logic |
+| Lack of observability | Structured logging of all inter-agent messages |
+
+---
+
+## 8. Practice Tasks
+- [ ] Build a 3-agent system with AutoGen: Researcher + Analyst + Writer
+- [ ] Implement a majority-voting agent where 3 LLMs solve the same task; evaluate accuracy vs. single agent
+- [ ] Build a HuggingGPT-inspired orchestrator that routes tasks to specialised tools
+- [ ] Implement a debate agent: Proposer + Critic + Judge on a complex question
+- [ ] Add structured logging to a multi-agent system; visualise agent interaction graph
+- [ ] Build a law research multi-agent: one agent searches case law, one synthesises, one formats output

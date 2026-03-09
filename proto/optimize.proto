@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package yieldagent;
+
+service Optimizer {
+  rpc Optimize(OptimizeRequest) returns (stream OptimizeProgress);
+}
+
+message OptimizeRequest {
+  string wallet_address = 1;
+  string optimization_id = 2;
+  OptimizationConstraints constraints = 3;
+}
+
+message OptimizationConstraints {
+  string risk_tolerance = 1;  // low | medium | high
+  repeated string target_chains = 2;
+  double max_gas_cost_usd = 3;
+}
+
+message OptimizeProgress {
+  string optimization_id = 1;
+  string status = 2;   // FETCHING_DATA | COMPUTING_GRAPH | GENERATING_PLAN | WAITING_FOR_SIGNATURE | BROADCASTING | DONE | FAILED
+  int32 progress = 3;  // 0-100
+  string summary = 4;
+  string error = 5;
+  OptimizationPlan partial_plan = 6;
+}
+
+message OptimizationPlan {
+  repeated RecommendedAction actions = 1;
+  double expected_yield_apy = 2;
+  double risk_score = 3;
+  string explanation = 4;
+}
+
+message RecommendedAction {
+  string id = 1;
+  string type = 2;   // DEPOSIT | WITHDRAW | SWAP | BRIDGE
+  string chain_id = 3;
+  string protocol_id = 4;
+  string asset_id = 5;
+  string amount = 6;
+  string amount_usd = 7;
+  string reason = 8;
+}

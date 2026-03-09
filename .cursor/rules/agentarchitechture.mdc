@@ -1,0 +1,140 @@
+
+---
+alwaysApply: true
+---
+# SKILL: AI Agent Architecture
+
+> Source: *Building AI Agents with LLMs, RAG, and Knowledge Graphs* — Raieli & Iuculano (Packt, 2025), Chapters 4 & 9
+
+---
+
+## 1. The Brain-Perception-Action Framework
+
+An LLM-based agent is composed of three core components:
+
+```
+Environment
+    │
+    ▼
+┌─────────────────────────────────────────────────────────┐
+│  PERCEPTION (Inputs)                                     │
+│  Text │ Images │ Audio │ Video │ Sensors │ Web           │
+└───────────────────────┬─────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────┐
+│  BRAIN (LLM Core)                                        │
+│  Storage: short-term (context) + long-term (RAG/DB)      │
+│  Reasoning: CoT, planning, reflection                    │
+│  Decision Making: plan formulation → plan reflection     │
+└───────────────────────┬─────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────┐
+│  ACTION                                                  │
+│  Text output │ Tool calls │ API calls │ Embodiment       │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Four Fundamental Agent Properties
+| Property | Description |
+|----------|-------------|
+| **Autonomy** | Operates without step-by-step human instruction |
+| **Reactivity** | Responds to environment state changes |
+| **Pro-activeness** | Goal-directed, not just reactive |
+| **Social ability** | Communicates with humans and other agents |
+
+---
+
+## 2. Agent Brain: Knowledge Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| Linguistic | Semantics & syntax of language | Formal communication |
+| Common-sense | Universally known facts | Physics, social norms |
+| Domain | Profession/task-specific knowledge | Medicine, finance, code |
+
+**Key constraint**: LLM knowledge is frozen at pre-training. Overcome with:
+- RAG (retrieval at inference time)
+- Fine-tuning (internalise new knowledge)
+- Tool use (access live APIs)
+
+---
+
+## 3. Planning Strategies
+
+### Two Decomposition Approaches
+| Method | Mechanism | Best For |
+|--------|-----------|----------|
+| Decomposition-first | Full plan upfront, then execute sequentially | Well-defined tasks, reduces hallucination |
+| Interleaved | Generate subtask → solve → repeat | Adaptive, dynamic tasks |
+
+### Planning Taxonomy (from literature)
+| Method | Idea | Representative Works |
+|--------|------|---------------------|
+| Task Decomposition | Divide & conquer | CoT, ReAct, HuggingGPT |
+| Multi-plan Selection | Generate multiple plans, select best | ToT, GoT, CoT-SC |
+| External Planner-aided | Symbolic/neural external planner | LLM+P, LLM+PDDL |
+| Reflection & Refinement | Iterative feedback loop | Reflexion, CRITIC, Self-Refine |
+| Memory-aided Planning | Use past experience to inform plans | REMEMBER, MemoryBank |
+
+### Plan Lifecycle
+1. **Plan Formulation**: Decompose task into ordered subtasks
+2. **Plan Reflection**: Evaluate plan (self or second model); refine before execution
+
+---
+
+## 4. Agent Memory Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│  SHORT-TERM MEMORY                           │
+│  In-context window — temporary, limited size │
+└─────────────────────┬───────────────────────┘
+                      │
+┌─────────────────────┴───────────────────────┐
+│  LONG-TERM MEMORY (External)                 │
+│  Vector DB (RAG) — semantic retrieval        │
+│  Structured DB — relational/graph data       │
+│  Fine-tuned weights — internalised knowledge │
+└─────────────────────────────────────────────┘
+```
+
+**Memory-augmented planning**: Agent stores observations, past task plans, and intermediate results in external DB; retrieves relevant context at each step.
+
+---
+
+## 5. Agent Deployment Modes
+
+| Mode | Description | Example |
+|------|-------------|---------|
+| **Task-oriented** | Assists human with discrete tasks; decomposes and executes | Web browsing, email, forms |
+| **Innovation-oriented** | Exploratory scientific/creative tasks | Lab assistant, software design |
+| **Lifecycle-oriented** | Continuous skill-building in open-world environments | Minecraft agent, Voyager |
+
+---
+
+## 6. Core Agent Frameworks (Tooling)
+
+| Framework | Strengths |
+|-----------|-----------|
+| **LangChain** | Rich ecosystem, chains, agents, tools — most popular |
+| **LlamaIndex** | Optimised for data ingestion and retrieval agents |
+| **Haystack** | Modular NLP pipelines, strong RAG support |
+| **Semantic Kernel** | Microsoft ecosystem, .NET + Python |
+| **AutoGen** | Multi-agent conversation framework |
+
+### Framework Selection Criteria
+- Task complexity and conversation depth
+- Tool/API integration requirements
+- Latency constraints (token throughput vs. quality)
+- Ecosystem and community support
+
+---
+
+## 7. Practice Tasks
+- [ ] Build a ReAct agent from scratch using LangChain with web search tool
+- [ ] Implement Reflexion pattern: agent generates plan → executes → reflects → refines
+- [ ] Build a task-decomposition planner (decomposition-first) for a multi-step research task
+- [ ] Instrument an agent to log all tool calls and reasoning traces
+- [ ] Benchmark Phi-3-mini vs Mistral-7B as agent brains on speed and task success rate

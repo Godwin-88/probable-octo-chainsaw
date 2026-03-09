@@ -1,0 +1,117 @@
+# Dynamic Yield Optimization Agent – one-command setup
+# Usage: docker compose -f deploy/docker-compose.yml up --build
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: yield-agent-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  neo4j:
+    image: neo4j:5-community
+    container_name: yield-agent-neo4j
+    environment:
+      NEO4J_AUTH: ${NEO4J_AUTH:-neo4j/yield-agent-dev}
+    ports:
+      - "7475:7474"   # Browser on host 7475 (default 7474 often in use)
+      - "7688:7687"   # Bolt on host 7688 (default 7687 often in use)
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7474"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  gateway-wdk:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.gateway
+    container_name: yield-agent-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      AI_CORE_GRPC_URL: ai-core:50051
+      REDIS_URL: redis://redis:6379
+      RPC_URL_ETHEREUM: ${RPC_URL_ETHEREUM:-https://eth.llamarpc.com}
+      RPC_URL_SEPOLIA: ${RPC_URL_SEPOLIA:-https://rpc.sepolia.org}
+      WDK_NETWORKS: ${WDK_NETWORKS:-}
+    depends_on:
+      redis:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  ai-core:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.ai-core
+    container_name: yield-agent-ai-core
+    ports:
+      - "50051:50051"
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-yield-agent-dev}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import grpc; print('ok')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.frontend
+    container_name: yield-agent-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - gateway-wdk
+    environment:
+      VITE_GATEWAY_URL: http://localhost:3000
+      VITE_WS_URL: ws://localhost:3000
+
+  indexer:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.indexer
+    container_name: yield-agent-indexer
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-yield-agent-dev}
+      REDIS_URL: redis://redis:6379
+      RPC_URL_ETHEREUM: ${RPC_URL_ETHEREUM:-https://eth.llamarpc.com}
+      RPC_URL_SEPOLIA: ${RPC_URL_SEPOLIA:-https://rpc.sepolia.org}
+    depends_on:
+      redis:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    restart: "on-failure"
+
+volumes:
+  neo4j_data:
+  redis_data:

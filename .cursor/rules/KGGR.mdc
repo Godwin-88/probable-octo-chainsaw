@@ -1,0 +1,203 @@
+---
+alwaysApply: true
+---
+# SKILL: Knowledge Graphs, GraphRAG, and Neo4j
+
+> Sources:
+> - *Building AI Agents with LLMs, RAG, and Knowledge Graphs* — Raieli & Iuculano (Packt, 2025), Chapter 7
+> - *Graph Data Science with Python and Neo4j* — Timothy Eastridge (AVA, 2024)
+> - *Graph Algorithms for Data Science* — Tomaž Bratanič (Manning, 2024)
+
+---
+
+## 1. What is a Knowledge Graph?
+
+A **Knowledge Graph (KG)** is a structured representation of knowledge as a directed labelled graph:
+- **Nodes** (entities): People, places, concepts, events
+- **Edges** (relationships): Typed, directed connections between entities
+- **Properties**: Attributes on nodes and edges
+- **Formal definition**: A set of triples `(subject, predicate, object)` — e.g., `(Paris, isCapitalOf, France)`
+
+### Taxonomies and Ontologies
+- **Taxonomy**: Hierarchical classification (e.g., `Dog → Animal`)
+- **Ontology**: Formal, machine-readable schema defining classes, properties, and axioms
+- Examples: OWL, RDF, SKOS
+
+---
+
+## 2. Neo4j: Labeled-Property Graph Model
+
+```
+Node: (:Person {name: "Alice", age: 30})
+Relationship: -[:KNOWS {since: 2020}]->
+Node: (:Person {name: "Bob"})
+```
+
+### Cypher Query Language — Core Clauses
+| Clause | Purpose |
+|--------|---------|
+| `MATCH` | Pattern matching — find nodes/relationships |
+| `WHERE` | Filter conditions |
+| `RETURN` | Specify output |
+| `CREATE` | Create nodes/relationships |
+| `MERGE` | Create if not exists, match if exists |
+| `SET` | Update properties |
+| `DELETE` / `DETACH DELETE` | Remove nodes/relationships |
+| `WITH` | Chain query stages |
+| `COLLECT` | Aggregate into list |
+| `UNWIND` | Expand list into rows |
+
+### Essential Cypher Patterns
+```cypher
+-- Match all persons who know each other
+MATCH (a:Person)-[:KNOWS]->(b:Person)
+RETURN a.name, b.name
+
+-- Create a relationship
+MERGE (a:Person {name: "Alice"})
+MERGE (b:Person {name: "Bob"})
+MERGE (a)-[:KNOWS {since: 2024}]->(b)
+
+-- Count relationships per node
+MATCH (p:Person)-[:KNOWS]->()
+RETURN p.name, COUNT(*) AS connections
+ORDER BY connections DESC
+
+-- Import CSV
+LOAD CSV WITH HEADERS FROM 'file:///data.csv' AS row
+CREATE (:Entity {id: row.id, name: row.name})
+```
+
+---
+
+## 3. Building a Knowledge Graph with an LLM
+
+### Pipeline
+```
+Unstructured Text
+      │
+      ▼
+[Named Entity Recognition (NER)] ──► Entities (nodes)
+      │
+      ▼
+[Relation Extraction] ──► Relationships (edges)
+      │
+      ▼
+[Entity Linking / Coreference Resolution] ──► Canonical entities
+      │
+      ▼
+[Knowledge Cleaning] ──► Remove duplicates, resolve conflicts
+      │
+      ▼
+[Knowledge Enrichment] ──► Add properties, link to external KGs
+      │
+      ▼
+[Neo4j / Graph DB] ──► Hosted knowledge graph
+```
+
+### LLM-Assisted KG Construction
+- Prompt LLM to extract entity-relation triples from raw text
+- Use structured output (JSON schema) for consistent triple format
+- Validate against ontology schema before ingesting
+- **Knowledge assessment**: Evaluate completeness and accuracy
+- **Knowledge cleaning**: Deduplicate entities, normalise names
+- **Knowledge hosting**: Deploy in Neo4j; expose via API
+
+---
+
+## 4. GraphRAG: Knowledge Graph + LLM Retrieval
+
+Standard RAG treats documents as flat text chunks. **GraphRAG** augments this with structured graph traversal:
+
+```
+User Query
+    │
+    ▼
+[Entity Extraction from Query]
+    │
+    ▼
+[Graph-based Indexing] ──► Neo4j entity lookup
+    │
+    ▼
+[Graph-guided Retrieval] ──► Traverse relationships from entities
+    │
+    ▼
+[Graph-augmented Context] ──► Structured + unstructured context
+    │
+    ▼
+LLM → Grounded Answer
+```
+
+### GraphRAG vs. Standard RAG
+| Feature | Standard RAG | GraphRAG |
+|---------|-------------|----------|
+| Context structure | Flat text chunks | Structured triples + text |
+| Relationship reasoning | None | Explicit multi-hop |
+| Entity disambiguation | Limited | Graph-level |
+| Hallucination resistance | Good | Better (grounded in schema) |
+
+### Graph-based Indexing Strategies
+- **Node-based indexing**: Embed node descriptions as vectors
+- **Subgraph indexing**: Embed 1/2-hop subgraphs around entities
+- **Community indexing**: Detect communities, summarise, embed community summaries
+
+---
+
+## 5. Knowledge Graph Embeddings
+
+Encode KG triples into dense vector space for ML downstream tasks:
+
+| Model | Formulation | Strengths |
+|-------|-------------|-----------|
+| **TransE** | `h + r ≈ t` (head + relation ≈ tail) | Simple, scalable |
+| **TransR** | Project to relation-specific space | Handles complex relations |
+| **DistMult** | Bilinear scoring | Symmetric relations |
+| **RotatE** | Relation as rotation in complex space | Captures patterns (symmetric, antisymmetric, inversion) |
+
+**Knowledge graph completion**: Predict missing links/triples using trained embeddings.
+
+---
+
+## 6. LLM Reasoning on Knowledge Graphs
+
+### Challenges
+- LLMs cannot natively query graph structure — need a translation layer
+- Multi-hop reasoning requires traversal logic beyond single-step retrieval
+- Large KGs exceed context window limits
+
+### Solutions
+- **Cypher generation**: LLM generates Cypher queries from natural language → execute on Neo4j
+- **Subgraph extraction**: Retrieve relevant subgraph, serialise as triples for LLM context
+- **Iterative retrieval**: Agent performs multiple rounds of graph queries
+
+---
+
+## 7. Python Integration with Neo4j
+
+```python
+from neo4j import GraphDatabase
+
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
+
+def run_query(query, params=None):
+    with driver.session() as session:
+        result = session.run(query, params or {})
+        return [record.data() for record in result]
+
+# Example: extract entities and relationships
+records = run_query("""
+    MATCH (e1:Entity)-[r]->(e2:Entity)
+    RETURN e1.name, type(r), e2.name
+    LIMIT 100
+""")
+```
+
+---
+
+## 8. Practice Tasks
+- [ ] Set up Neo4j locally and load a sample dataset (e.g., movie graph)
+- [ ] Write Cypher queries: MATCH patterns, aggregations, path traversals
+- [ ] Build an LLM pipeline that extracts triples from text and inserts into Neo4j
+- [ ] Implement GraphRAG: entity extraction → Cypher generation → context injection
+- [ ] Train TransE embeddings on a knowledge graph and evaluate link prediction
+- [ ] Build a Cypher-generating agent: natural language → Cypher → execute → return results

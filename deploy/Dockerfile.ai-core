@@ -1,0 +1,17 @@
+FROM python:3.11-slim
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY ai-core/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY proto/ /app/proto/
+COPY ai-core/ /app/ai-core/
+WORKDIR /app/ai-core
+RUN python -m grpc_tools.protoc -I/app/proto --python_out=./ai_core --grpc_python_out=./ai_core /app/proto/optimize.proto
+
+EXPOSE 50051
+CMD ["python", "-m", "ai_core.server"]

@@ -1,0 +1,500 @@
+---
+alwaysApply: true
+---
+# SKILL: Graph Algorithms Without Neo4j GDS — Pure Python & GNN Equivalents
+
+> Sources:
+> - *Graph Machine Learning, 2nd Ed.* — Marzullo, Deusebio, Stamile (Packt, 2025)
+> - *Graph Neural Networks: Foundations, Frontiers, and Applications* — Wu, Cui, Pei, Zhao (Springer, 2022)
+> - *Graph Algorithms for Data Science* — Bratanič (Manning, 2024)
+
+---
+
+## 0. Clarification on Neo4j GDS Availability
+
+| Edition | Cost | GDS Available? |
+|---------|------|---------------|
+| Neo4j Community Server | Free | Yes — GDS plugin is open-source |
+| Neo4j AuraDB Free Tier | Free (cloud) | No GDS plugin |
+| Neo4j Desktop (local) | Free for dev | Yes — install GDS plugin manually |
+| Neo4j Enterprise | Paid | Yes + security/clustering extras |
+
+**Key insight**: If you cannot install GDS (e.g., AuraDB Free, restricted environment, non-Neo4j graph store), you can pull the graph into Python and run every algorithm independently. Neo4j becomes pure storage + Cypher query engine; Python handles all analytics.
+
+---
+
+## 1. The Python-First Architecture (GDS-Free)
+
+```
+Neo4j (or any graph DB)
+    │  Cypher MATCH queries
+    ▼
+Python (NetworkX / PyG / DGL)
+    │
+    ├── Classical algorithms  → NetworkX, igraph, python-louvain
+    ├── GNN-based algorithms  → PyTorch Geometric, DGL
+    └── Embedding models      → node2vec, stellargraph, karateclub
+    │
+    ▼
+Results written back to Neo4j or used directly in agent pipeline
+```
+
+### Extract Graph from Neo4j into Python
+```python
+from neo4j import GraphDatabase
+import networkx as nx
+
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
+
+def neo4j_to_networkx(driver, node_label: str, rel_type: str) -> nx.DiGraph:
+    """Pull a Neo4j subgraph into a NetworkX DiGraph."""
+    G = nx.DiGraph()
+    with driver.session() as session:
+        # Load nodes
+        nodes = session.run(f"MATCH (n:{node_label}) RETURN id(n) AS id, n.name AS name")
+        for record in nodes:
+            G.add_node(record["id"], name=record["name"])
+
+        # Load edges
+        edges = session.run(
+            f"MATCH (a:{node_label})-[r:{rel_type}]->(b:{node_label}) "
+            "RETURN id(a) AS src, id(b) AS dst, r.weight AS weight"
+        )
+        for record in edges:
+            G.add_edge(record["src"], record["dst"],
+                       weight=record["weight"] or 1.0)
+    return G
+
+G = neo4j_to_networkx(driver, "Person", "KNOWS")
+```
+
+---
+
+## 2. GDS Algorithm → Python Equivalent Mapping
+
+### 2.1 PageRank
+
+**GDS (when available):**
+```cypher
+CALL gds.pageRank.stream('myGraph') YIELD nodeId, score
+```
+
+**Python (NetworkX):**
+```python
+import networkx as nx
+
+# Basic PageRank
+pagerank_scores = nx.pagerank(G, alpha=0.85, max_iter=100, tol=1e-6)
+
+# Personalised PageRank (biased toward seed nodes)
+seed_nodes = {node_id: 1.0}  # personalisation vector
+personalized_pr = nx.pagerank(G, alpha=0.85, personalization=seed_nodes)
+
+# Top-10 nodes by PageRank
+top_nodes = sorted(pagerank_scores.items(), key=lambda x: x[1], reverse=True)[:10]
+```
+
+**GNN equivalent (APPNP — Approximated Personalised Propagation of Neural Predictions):**
+```python
+from torch_geometric.nn import APPNP
+import torch.nn.functional as F
+
+class APPNPModel(torch.nn.Module):
+    def __init__(self, in_channels, hidden, out_channels, K=10, alpha=0.1):
+        super().__init__()
+        self.lin1 = torch.nn.Linear(in_channels, hidden)
+        self.lin2 = torch.nn.Linear(hidden, out_channels)
+        self.prop = APPNP(K=K, alpha=alpha)  # alpha = teleport probability
+
+    def forward(self, x, edge_index):
+        x = F.relu(self.lin1(x))
+        x = self.lin2(x)
+        return self.prop(x, edge_index)  # applies personalised PageRank propagation
+```
+
+---
+
+### 2.2 Weakly / Strongly Connected Components
+
+**Python (NetworkX):**
+```python
+import networkx as nx
+
+# Weakly Connected Components (ignore edge direction)
+wcc = list(nx.weakly_connected_components(G))
+print(f"{len(wcc)} components, largest has {max(len(c) for c in wcc)} nodes")
+
+# Strongly Connected Components (directed paths both ways)
+scc = list(nx.strongly_connected_components(G))
+
+# Label each node with its component ID
+component_map = {}
+for comp_id, component in enumerate(wcc):
+    for node in component:
+        component_map[node] = comp_id
+
+# Write labels back to Neo4j
+def write_component_labels(driver, component_map):
+    with driver.session() as session:
+        session.run("""
+            UNWIND $pairs AS pair
+            MATCH (n) WHERE id(n) = pair.node_id
+            SET n.component = pair.component
+        """, pairs=[{"node_id": k, "component": v} for k, v in component_map.items()])
+```
+
+**GNN equivalent (node classification on component membership):**
+Components are inherently structural — GNNs don't replace BFS/DFS here. Use NetworkX.
+However, a GNN can **predict** whether two nodes are in the same component as a link property:
+```python
+# Edge feature: are nodes in same component?
+for u, v in G.edges():
+    G[u][v]['same_component'] = int(component_map[u] == component_map[v])
+```
+
+---
+
+### 2.3 Louvain Community Detection
+
+**Python (python-louvain / community library):**
+```python
+# pip install python-louvain
+import community as community_louvain
+import networkx as nx
+
+# Louvain requires undirected graph
+G_undirected = G.to_undirected()
+partition = community_louvain.best_partition(G_undirected, resolution=1.0)
+# partition = {node_id: community_id, ...}
+
+modularity = community_louvain.modularity(partition, G_undirected)
+print(f"Modularity: {modularity:.4f}")
+
+# Group nodes by community
+from collections import defaultdict
+communities = defaultdict(list)
+for node, comm_id in partition.items():
+    communities[comm_id].append(node)
+```
+
+**Alternative: Leiden algorithm (higher quality than Louvain):**
+```python
+# pip install leidenalg igraph
+import igraph as ig
+import leidenalg
+
+# Convert NetworkX → igraph
+edges = list(G_undirected.edges())
+ig_graph = ig.Graph(edges=edges, directed=False)
+partition_leiden = leidenalg.find_partition(ig_graph, leidenalg.ModularityVertexPartition)
+```
+
+**GNN equivalent — community detection via unsupervised node classification:**
+```python
+from torch_geometric.nn import GCNConv
+from torch_geometric.utils import from_networkx
+
+# Convert to PyG data
+data = from_networkx(G_undirected)
+
+class CommunityGNN(torch.nn.Module):
+    """Unsupervised GNN: learn embeddings → cluster with K-Means."""
+    def __init__(self, in_channels, hidden, embedding_dim):
+        super().__init__()
+        self.conv1 = GCNConv(in_channels, hidden)
+        self.conv2 = GCNConv(hidden, embedding_dim)
+
+    def forward(self, x, edge_index):
+        x = F.relu(self.conv1(x, edge_index))
+        return self.conv2(x, edge_index)  # node embeddings
+
+# Then cluster embeddings
+from sklearn.cluster import KMeans
+model = CommunityGNN(in_channels=data.num_features, hidden=64, embedding_dim=32)
+embeddings = model(data.x, data.edge_index).detach().numpy()
+communities_gnn = KMeans(n_clusters=10).fit_predict(embeddings)
+```
+
+---
+
+### 2.4 Betweenness & Closeness Centrality
+
+**Python (NetworkX):**
+```python
+# Betweenness centrality — O(VE) for unweighted
+betweenness = nx.betweenness_centrality(G, normalized=True, weight='weight')
+
+# Approximation for large graphs (sample k=500 pivot nodes)
+betweenness_approx = nx.betweenness_centrality(G, k=500, normalized=True)
+
+# Closeness centrality
+closeness = nx.closeness_centrality(G, wf_improved=True)
+
+# Degree centrality
+degree = nx.degree_centrality(G)
+```
+
+**Fast alternative with igraph (10–100x faster than NetworkX on large graphs):**
+```python
+import igraph as ig
+
+ig_graph = ig.Graph.from_networkx(G)
+betweenness_ig = ig_graph.betweenness(directed=True, normalized=True)
+closeness_ig = ig_graph.closeness(normalized=True)
+pagerank_ig = ig_graph.pagerank(damping=0.85)
+```
+
+**GNN equivalent — centrality prediction:**
+```python
+# Train a GNN to predict betweenness centrality from graph structure
+# Target: normalised betweenness scores as regression labels
+class CentralityGNN(torch.nn.Module):
+    def __init__(self, in_channels, hidden):
+        super().__init__()
+        self.conv1 = GCNConv(in_channels, hidden)
+        self.conv2 = GCNConv(hidden, hidden)
+        self.head = torch.nn.Linear(hidden, 1)  # regression head
+
+    def forward(self, x, edge_index):
+        x = F.relu(self.conv1(x, edge_index))
+        x = F.relu(self.conv2(x, edge_index))
+        return self.head(x).squeeze()  # predicted centrality score
+
+# Loss: MSE against computed betweenness labels
+# Benefit: once trained, inference is O(n) vs O(VE) for exact computation
+```
+
+---
+
+### 2.5 Node Similarity (Jaccard / Cosine)
+
+**Python (NetworkX + scikit-learn):**
+```python
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import normalize
+
+# Jaccard similarity from NetworkX (for bipartite graphs)
+from networkx.algorithms import bipartite
+jaccard_scores = list(nx.jaccard_coefficient(G_undirected, G_undirected.edges()))
+
+# Structural similarity via adjacency matrix cosine similarity
+A = nx.to_numpy_array(G_undirected)
+A_norm = normalize(A, norm='l2')
+similarity_matrix = cosine_similarity(A_norm)
+
+# Find top-K similar nodes for each node
+def top_k_similar(sim_matrix, node_idx, k=5):
+    scores = sim_matrix[node_idx]
+    scores[node_idx] = -1  # exclude self
+    return np.argsort(scores)[::-1][:k]
+```
+
+**GNN equivalent — learned similarity via contrastive learning:**
+```python
+from torch_geometric.nn import GraphSAGE
+
+class SimilarityGNN(torch.nn.Module):
+    """Learn node embeddings; use dot product as similarity."""
+    def __init__(self, in_channels, hidden, out_channels):
+        super().__init__()
+        self.encoder = GraphSAGE(in_channels, hidden, num_layers=2,
+                                  out_channels=out_channels)
+
+    def forward(self, x, edge_index):
+        return self.encoder(x, edge_index)
+
+    def similarity(self, z_u, z_v):
+        return (z_u * z_v).sum(dim=-1).sigmoid()
+```
+
+---
+
+### 2.6 Node Embeddings (node2vec)
+
+**Python (node2vec library — GDS-free):**
+```python
+# pip install node2vec
+from node2vec import Node2Vec
+
+# Build embeddings — equivalent to GDS node2vec
+node2vec = Node2Vec(
+    G,
+    dimensions=128,      # embedding size
+    walk_length=80,      # random walk length
+    num_walks=10,        # walks per node
+    p=1.0,               # return parameter
+    q=0.5,               # in-out parameter (q<1 = community-focused)
+    workers=4
+)
+
+model = node2vec.fit(
+    window=10,
+    min_count=1,
+    batch_words=4
+)
+
+# Get embedding for a node
+emb = model.wv[str(node_id)]
+
+# Most similar nodes
+similar = model.wv.most_similar(str(node_id), topn=5)
+
+# Save all embeddings as numpy array
+import numpy as np
+node_ids = list(G.nodes())
+embeddings = np.array([model.wv[str(n)] for n in node_ids])
+```
+
+**GNN equivalent (PyG node2vec):**
+```python
+from torch_geometric.nn import Node2Vec as PyGNode2Vec
+from torch_geometric.utils import from_networkx
+
+data = from_networkx(G)
+
+node2vec_pyg = PyGNode2Vec(
+    data.edge_index,
+    embedding_dim=128,
+    walk_length=20,
+    context_size=10,
+    walks_per_node=10,
+    p=1.0,
+    q=0.5,
+    num_negative_samples=1,
+    sparse=True
+)
+
+loader = node2vec_pyg.loader(batch_size=128, shuffle=True)
+optimizer = torch.optim.SparseAdam(node2vec_pyg.parameters(), lr=0.01)
+
+for epoch in range(100):
+    node2vec_pyg.train()
+    total_loss = 0
+    for pos_rw, neg_rw in loader:
+        optimizer.zero_grad()
+        loss = node2vec_pyg.loss(pos_rw, neg_rw)
+        loss.backward()
+        optimizer.step()
+        total_loss += loss.item()
+
+# Final embeddings
+embeddings = node2vec_pyg.embedding.weight.data.numpy()
+```
+
+---
+
+## 3. Full GNN Pipeline Replacing GDS Workflow
+
+```
+Neo4j (storage + Cypher)
+      │
+      │  MATCH (n)-[r]->(m) RETURN ...
+      ▼
+NetworkX / igraph (Python)
+      │
+      │  Classical algorithms (fast, exact)
+      │  PageRank, WCC, Louvain, Betweenness
+      ▼
+PyTorch Geometric (PyG)
+      │
+      │  GNN training (node2vec, GCN, GraphSAGE, GAT)
+      │  Node classification, link prediction
+      ▼
+Results (embeddings, labels, scores)
+      │
+      │  UNWIND $results MATCH (n) SET n.score = ...
+      ▼
+Neo4j (write results back via Cypher)
+```
+
+### Complete Pipeline Code
+```python
+import networkx as nx
+import community as community_louvain
+from node2vec import Node2Vec
+from neo4j import GraphDatabase
+import pandas as pd
+
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
+
+# 1. Extract graph
+G = neo4j_to_networkx(driver, "Person", "KNOWS")
+G_undirected = G.to_undirected()
+
+# 2. Classical algorithms
+pagerank = nx.pagerank(G, alpha=0.85)
+communities = community_louvain.best_partition(G_undirected)
+wcc = {n: i for i, comp in enumerate(nx.weakly_connected_components(G))
+       for n in comp}
+
+# 3. Node embeddings
+node2vec = Node2Vec(G, dimensions=64, walk_length=30, num_walks=10, workers=2)
+model = node2vec.fit(window=5, min_count=1)
+
+# 4. Build feature DataFrame
+results = []
+for node in G.nodes():
+    results.append({
+        "node_id": node,
+        "pagerank": pagerank[node],
+        "community": communities.get(node, -1),
+        "component": wcc[node],
+        "embedding": model.wv[str(node)].tolist()
+    })
+df = pd.DataFrame(results)
+
+# 5. Write back to Neo4j
+with driver.session() as session:
+    session.run("""
+        UNWIND $rows AS row
+        MATCH (n) WHERE id(n) = row.node_id
+        SET n.pagerank = row.pagerank,
+            n.community = row.community,
+            n.component = row.component
+    """, rows=df[["node_id","pagerank","community","component"]].to_dict("records"))
+
+print("Pipeline complete:", df.shape)
+```
+
+---
+
+## 4. Library Quick-Reference
+
+| Need | Library | Install | Speed |
+|------|---------|---------|-------|
+| Classical graph algorithms | `networkx` | `pip install networkx` | Medium |
+| Fast classical algorithms | `igraph` (Python bindings) | `pip install igraph` | Fast (C backend) |
+| Louvain community detection | `python-louvain` | `pip install python-louvain` | Medium |
+| Leiden (better than Louvain) | `leidenalg` | `pip install leidenalg` | Fast |
+| node2vec embeddings | `node2vec` | `pip install node2vec` | Medium |
+| GNN training | `torch_geometric` (PyG) | See PyG install guide | GPU-accelerated |
+| GNN alternative | `dgl` | `pip install dgl` | GPU-accelerated |
+| High-level GNN API | `stellargraph` | `pip install stellargraph` | Medium |
+| Misc. embeddings | `karateclub` | `pip install karateclub` | Medium |
+| Graph visualisation | `gephi` / `pyvis` | `pip install pyvis` | — |
+
+---
+
+## 5. When to Use What
+
+| Situation | Recommendation |
+|-----------|---------------|
+| Small graph (<100K nodes), need exact results | NetworkX |
+| Large graph (>1M nodes), need speed | igraph |
+| Need node embeddings for downstream ML | node2vec (karateclub) or PyG Node2Vec |
+| Node classification with features | GCN / GraphSAGE (PyG) |
+| Link prediction | PyG + custom edge features |
+| Community detection, production | Leiden (leidenalg) |
+| Streaming / incremental graph updates | Custom incremental PageRank |
+| GDS available in Neo4j | Use GDS — it's faster and stays in-database |
+
+---
+
+## 6. Practice Tasks
+- [ ] Extract a Neo4j graph into NetworkX; reproduce PageRank results and compare to GDS
+- [ ] Run Louvain (python-louvain) and Leiden (leidenalg) on same graph; compare modularity scores
+- [ ] Train node2vec embeddings without GDS; use them in a downstream classifier (sklearn)
+- [ ] Build a GCN in PyG for node classification; compare to NetworkX centrality as baseline features
+- [ ] Write a full pipeline: Neo4j → igraph → community labels → write back to Neo4j via Cypher
+- [ ] Benchmark: NetworkX vs igraph on a 500K-node graph for betweenness centrality

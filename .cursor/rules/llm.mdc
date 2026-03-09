@@ -1,0 +1,95 @@
+---
+alwaysApply: true
+---
+# SKILL: LLM Fundamentals for Agentic Systems Engineers
+
+> Source: *Building AI Agents with LLMs, RAG, and Knowledge Graphs* — Raieli & Iuculano (Packt, 2025), Chapters 1–3
+
+---
+
+## 1. Text Representation Pipeline
+
+### Encoding Progression
+| Method | Captures | Limitation |
+|--------|----------|------------|
+| One-Hot Encoding | Word presence | No semantics, sparse, huge dimension |
+| Bag-of-Words (BoW) | Word frequency | No order, no context |
+| TF-IDF | Relative importance | Still no semantics |
+| Word2Vec / Embeddings | Semantic meaning | Static (no context-sensitivity) |
+| Transformer Embeddings | Contextual meaning | Expensive to compute |
+
+### Key Concepts
+- **Tokenization**: Converting text to fundamental units (words, subwords, punctuation)
+- **Lemmatization / Stemming**: Normalising word forms before vectorisation
+- **Cosine Similarity**: Preferred similarity metric — scale-invariant, bounded [-1, 1], robust to high dimensions
+- **Word2Vec**: Self-supervised; trains via context-window binary classification (Skip-gram / CBOW)
+- **Embedding dimension sweet spot**: ~300 dimensions (performance plateaus beyond this for Word2Vec)
+
+---
+
+## 2. Transformer Architecture
+
+### Attention Mechanism
+- **Self-attention**: Each token attends to every other token in the sequence — enables long-range dependencies
+- **Multi-head attention**: Parallel attention heads capture different types of relationships
+- **Positional encoding**: Injects sequence order (transformers are permutation-invariant by design)
+- **Masked language modelling (MLM)**: Training objective that masks tokens and predicts them — core of BERT-style models
+
+### Training Strategies
+| Strategy | When to Use |
+|----------|-------------|
+| Pre-training | Build general language knowledge on massive corpora |
+| Instruction tuning | Align model to follow instructions |
+| Fine-tuning | Adapt to a specific domain/task with labelled data |
+| RLHF / PPO / DPO | Align to human preferences |
+
+### Scaling Laws
+- Performance scales predictably with: model size, data size, compute budget
+- **Emergent abilities**: Capabilities that appear suddenly at scale thresholds (not linearly predictable)
+- **Mixture of Experts (MoE)**: Conditional computation — only activate a subset of parameters per token
+
+---
+
+## 3. LLM Capabilities and Limitations
+
+### Strengths
+- In-context learning (zero-shot / few-shot)
+- Chain-of-Thought (CoT) reasoning
+- Multimodal inputs (text, image, audio via specialist encoders)
+- Code generation and tool use
+
+### Key Limitations
+- **Knowledge cutoff**: Frozen at pre-training time — cannot learn new facts post-training
+- **Hallucination**: Confidently generating incorrect information — must be mitigated by RAG or grounding
+- **Context window**: Maximum input length constrains memory and reasoning depth
+- **No persistent memory**: Each call is stateless unless memory is explicitly engineered
+
+### Prompt Engineering Techniques
+| Technique | Description |
+|-----------|-------------|
+| Zero-shot | Instruction only, no examples |
+| Few-shot | Examples embedded in prompt |
+| Chain-of-Thought (CoT) | "Think step by step" elicits reasoning traces |
+| Self-consistency | Multiple reasoning paths → majority vote |
+| ReAct | Interleave reasoning and actions |
+| DSPy | Automated prompt optimisation via declarative signatures |
+
+---
+
+## 4. Choosing the Right LLM for an Agent
+
+**Decision factors:**
+1. **Closed vs. open-source**: Closed (GPT-4, Claude) → API cost per token; Open (Mistral, LLaMA) → infrastructure cost
+2. **Speed**: Tokens/second and tokens/second/billion-parameters as efficiency metrics
+3. **Quality**: Evaluate with a larger judge model (GPT-4 as evaluator) on overall quality, completeness, truthfulness
+4. **Domain knowledge**: General vs. domain-specialised (e.g., FinGPT for finance)
+5. **Infrastructure**: Hosting cost scales with parameter count — balance compute vs. performance
+
+---
+
+## 5. Practice Tasks
+- [ ] Implement TF-IDF from scratch in Python (numpy only)
+- [ ] Train a Word2Vec model with Gensim and visualise with UMAP
+- [ ] Build a sentiment classifier using LSTM and compare with fine-tuned BERT
+- [ ] Implement a CoT prompt and self-consistency sampling on a math benchmark
+- [ ] Benchmark Mistral-7B vs Phi-3-mini: tokens/sec, quality scores

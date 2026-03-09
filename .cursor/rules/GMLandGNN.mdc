@@ -1,0 +1,192 @@
+---
+alwaysApply: true
+---
+# SKILL: Graph Machine Learning and Graph Neural Networks
+
+> Sources:
+> - *Graph Machine Learning, 2nd Ed.* — Marzullo, Deusebio, Stamile (Packt, 2025)
+> - *Graph Neural Networks: Foundations, Frontiers, and Applications* — Wu, Cui, Pei, Zhao (Springer, 2022)
+> - *Graph Algorithms for Data Science* — Bratanič (Manning, 2024), Chapters 9–12
+
+---
+
+## 1. Why Graph Machine Learning?
+
+Traditional ML ignores relational structure. Graph ML captures:
+- **Homophily**: Similar nodes tend to connect (e.g., people with same interests)
+- **Structural roles**: Nodes with similar graph positions share properties
+- **Long-range dependencies**: Patterns spanning multiple hops
+
+**Core ML tasks on graphs:**
+| Task Level | Examples |
+|------------|---------|
+| Node-level | Node classification, node regression |
+| Edge-level | Link prediction, edge classification |
+| Graph-level | Graph classification, graph regression |
+
+---
+
+## 2. Graph Embedding Problem
+
+**Goal**: Map each node (or graph) to a dense vector in ℝᵈ such that:
+- Similar nodes (by structure or features) have similar vectors
+- Vectors can be used as features in downstream ML
+
+### Taxonomy of Graph Embedding Approaches
+| Category | Description | Examples |
+|----------|-------------|---------|
+| **Matrix factorisation** | Factorise adjacency/Laplacian | Spectral methods, DeepWalk variant |
+| **Random walk based** | Learn from node sequences via random walks | DeepWalk, node2vec |
+| **Deep learning (GNNs)** | Message passing on graph structure | GCN, GAT, GraphSAGE |
+| **Knowledge graph embeddings** | Embed triples in latent space | TransE, RotatE, DistMult |
+
+---
+
+## 3. node2vec Algorithm
+
+Extends Word2Vec to graph nodes via biased random walks:
+
+```
+1. For each node, generate random walks of length L
+2. Control walk behaviour with two parameters:
+   - p (return parameter): controls backtracking
+   - q (in-out parameter): controls exploration vs. exploitation
+     - q < 1 → BFS-like, captures local community structure (homophily)
+     - q > 1 → DFS-like, captures structural roles
+3. Feed walks to Word2Vec (Skip-gram)
+4. Result: node embeddings in ℝᵈ
+```
+
+```python
+from gds import GraphDataScience
+
+gds = GraphDataScience("bolt://localhost:7687", auth=("neo4j", "password"))
+
+# Project graph
+gds.graph.project("myGraph", "Node", "REL")
+
+# Run node2vec
+result = gds.node2vec.stream("myGraph", {
+    "walkLength": 80,
+    "walksPerNode": 10,
+    "windowSize": 10,
+    "embeddingDimension": 128
+})
+```
+
+---
+
+## 4. Graph Neural Networks (GNNs)
+
+### Message Passing Framework
+The core operation in most GNNs:
+
+```
+For each node v at layer k:
+  1. AGGREGATE: collect messages from neighbours N(v)
+     m_v^(k) = AGGREGATE({h_u^(k-1) : u ∈ N(v)})
+  2. UPDATE: combine with current state
+     h_v^(k) = UPDATE(h_v^(k-1), m_v^(k))
+```
+
+### GNN Variants
+| Model | Aggregation | Key Feature |
+|-------|-------------|-------------|
+| **GCN** (Graph Convolutional Network) | Normalised sum | Simple, scalable |
+| **GraphSAGE** | Sample & aggregate (mean/max/LSTM) | Inductive (unseen nodes) |
+| **GAT** (Graph Attention Network) | Weighted sum via learned attention | Differentiable importance weights |
+| **GIN** (Graph Isomorphism Network) | Sum + MLP | Theoretically most powerful (WL test) |
+| **MPNN** (Message Passing NN) | General message function | Molecular property prediction |
+
+### Transductive vs. Inductive
+| Type | Description | Use Case |
+|------|-------------|---------|
+| **Transductive** | Train and test on same fixed graph | Citation networks (Cora, Citeseer) |
+| **Inductive** | Generalise to unseen nodes/graphs | Protein interaction, social networks |
+
+---
+
+## 5. Key GNN Applications
+
+### Node Classification
+```
+1. Prepare: node features X, adjacency A, labels Y (partial)
+2. Model: multi-layer GNN → softmax head
+3. Train: cross-entropy loss on labelled nodes
+4. Predict: classify unlabelled nodes
+```
+
+### Link Prediction
+```
+1. Train: positive edges (existing) + negative samples (non-existing)
+2. Features: node embeddings + edge features
+   - Network distance, preferential attachment
+   - Common neighbours, Adamic-Adar index
+   - Clustering coefficient of common neighbours
+3. Model: binary classifier on edge representation (e.g., dot product of node embeddings)
+4. Evaluate: AUC-ROC on held-out edges
+```
+
+### Knowledge Graph Completion
+Using TransE: train such that `‖h + r - t‖` is minimised for true triples and maximised for false triples.
+
+---
+
+## 6. Graph ML Frameworks
+
+| Framework | Language | Highlights |
+|-----------|----------|-----------|
+| **PyG** (PyTorch Geometric) | Python/PyTorch | Most popular, huge model zoo |
+| **DGL** (Deep Graph Library) | Python/PyTorch/MXNet | Flexible message passing API |
+| **StellarGraph** | Python/TensorFlow | High-level API, good docs |
+| **NetworkX** | Python | Analysis only, no GPU training |
+
+### PyG Example — GCN Node Classification
+```python
+import torch
+import torch.nn.functional as F
+from torch_geometric.nn import GCNConv
+
+class GCN(torch.nn.Module):
+    def __init__(self, num_features, num_classes):
+        super().__init__()
+        self.conv1 = GCNConv(num_features, 64)
+        self.conv2 = GCNConv(64, num_classes)
+
+    def forward(self, x, edge_index):
+        x = F.relu(self.conv1(x, edge_index))
+        x = F.dropout(x, training=self.training)
+        return F.log_softmax(self.conv2(x, edge_index), dim=1)
+```
+
+---
+
+## 7. Graph Properties for Feature Engineering
+
+| Metric | Level | Description |
+|--------|-------|-------------|
+| Degree centrality | Node | Number of neighbours |
+| Betweenness centrality | Node | Shortest-path broker importance |
+| Closeness centrality | Node | Average distance to all nodes |
+| Clustering coefficient | Node | Triangle density in neighbourhood |
+| Modularity | Graph | Quality of community partitioning |
+| Assortativity | Graph | Tendency of similar nodes to connect |
+| Motifs / Graphlets | Subgraph | Small recurring structural patterns |
+
+---
+
+## 8. Graph ML for LLM-Enhanced Agents
+
+- **GraphRAG**: GNN-based document retrieval with knowledge structure
+- **LLM + KG reasoning**: LLM traverses KG via tool calls, GNN encodes subgraph context
+- **Node2vec + LLM**: Use graph embeddings as additional features in LLM context
+- **GNN as agent tool**: Expose GNN inference endpoint as callable tool in agent framework
+
+---
+
+## 9. Practice Tasks
+- [ ] Run node2vec on a citation network (Cora); train node classifier with resulting embeddings
+- [ ] Implement a GCN from scratch with PyTorch Geometric for node classification
+- [ ] Build link prediction model using network distance, common neighbours as features
+- [ ] Train TransE on a KG; evaluate knowledge graph completion with hits@10
+- [ ] Build an end-to-end pipeline: text corpus → NLP extraction → Neo4j KG → GNN training
