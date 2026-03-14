@@ -1,0 +1,123 @@
+# Bootstrap (install first to avoid setuptools build errors)
+setuptools>=65.0.0
+wheel>=0.40.0
+
+# Core Dependencies
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+numpy>=1.24.0
+maturin>=1.4.0
+
+# HTTP and API
+httpx>=0.25.0
+requests>=2.31.0
+aiofiles>=23.2.1
+
+# Data Science and Numerical Computing
+scipy>=1.10.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.17.0
+jupyter>=1.0.0
+ipykernel>=6.26.0
+notebook>=7.0.0
+
+# Testing Framework
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+pytest-benchmark>=4.0.0
+
+# Performance and Monitoring
+psutil>=5.9.0
+memory-profiler>=0.61.0
+py-spy>=0.3.14
+
+# Development Tools
+black>=23.11.0
+isort>=5.12.0
+flake8>=6.1.0
+mypy>=1.7.0
+pre-commit>=3.5.0
+
+# Documentation
+mkdocs>=1.5.0
+mkdocs-material>=9.4.0
+sphinx>=7.1.0
+
+# Security
+cryptography>=41.0.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# Database (Optional)
+sqlalchemy>=2.0.0
+alembic>=1.12.0
+asyncpg>=0.29.0
+psycopg2-binary>=2.9.0
+redis>=5.0.0
+neo4j>=5.14.0
+pypdf>=4.0.0              # PDF text extraction for knowledge ingestion
+
+# Configuration Management
+python-dotenv>=1.0.0
+pyyaml>=6.0.0
+toml>=0.10.2
+
+# Logging and Monitoring
+structlog>=23.2.0
+prometheus-client>=0.19.0
+sentry-sdk[fastapi]>=1.38.0
+
+# Load Testing
+locust>=2.17.0
+
+# Optimization (Phase 1: MVO)
+cvxpy>=1.4.0
+
+# Financial Libraries
+quantlib>=1.34
+# yfinance removed — DeFi-only data via gateway + Neo4j (app.defi_data)
+alpha-vantage>=2.3.0
+
+# Nautilus Trader (Blotter — optional; fallback is DeFi data)
+# nautilus_trader>=1.220.0  # uncomment for Nautilus DataCatalog
+
+# Machine Learning (Optional)
+scikit-learn>=1.3.0
+xgboost>=2.0.0
+lightgbm>=4.0.0
+
+# Time Series Analysis
+statsmodels>=0.14.0
+arch>=5.6.0
+
+# Parallel Computing
+joblib>=1.3.0
+dask>=2023.5.0
+
+# Validation and Serialization
+marshmallow>=3.20.0
+cerberus>=1.3.5
+
+# Caching
+cachetools>=5.3.0
+diskcache>=5.6.0
+
+# Property-based testing
+hypothesis>=6.88.0
+
+# Utilities
+click>=8.1.0
+rich>=13.7.0
+tqdm>=4.66.0
+python-dateutil>=2.8.0
+pytz>=2023.0
+
+# Development Dependencies
+ipython>=8.13.0
+jupyterlab>=4.0.0
+pip-tools>=7.3.0

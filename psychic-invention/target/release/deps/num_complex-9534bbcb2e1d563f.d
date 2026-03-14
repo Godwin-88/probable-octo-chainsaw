@@ -1,0 +1,10 @@
+C:\Users\ThinkPad\Documents\WQU\PortFolio Management\psychic-invention\target\release\deps\num_complex-9534bbcb2e1d563f.d: C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\lib.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\cast.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\pow.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\complex_float.rs
+
+C:\Users\ThinkPad\Documents\WQU\PortFolio Management\psychic-invention\target\release\deps\libnum_complex-9534bbcb2e1d563f.rlib: C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\lib.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\cast.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\pow.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\complex_float.rs
+
+C:\Users\ThinkPad\Documents\WQU\PortFolio Management\psychic-invention\target\release\deps\libnum_complex-9534bbcb2e1d563f.rmeta: C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\lib.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\cast.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\pow.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\complex_float.rs
+
+C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\lib.rs:
+C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\cast.rs:
+C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\pow.rs:
+C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\num-complex-0.4.6\src\complex_float.rs:

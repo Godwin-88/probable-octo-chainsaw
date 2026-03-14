@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export Functionality Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1e293b;
+            color: #e2e8f0;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #334155;
+            border-radius: 8px;
+        }
+        button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        pre {
+            background-color: #1e293b;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Export Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>Black-Scholes Export Test</h2>
+        <button onclick="testBlackScholesCSV()">Test BS CSV Export</button>
+        <button onclick="testBlackScholesJSON()">Test BS JSON Export</button>
+        <pre id="bs-output"></pre>
+    </div>
+
+    <div class="test-section">
+        <h2>FFT Surface Export Test</h2>
+        <button onclick="testFFTSurfaceCSV()">Test FFT CSV Export</button>
+        <button onclick="testFFTSurfaceJSON()">Test FFT JSON Export</button>
+        <pre id="fft-output"></pre>
+    </div>
+
+    <script>
+        // Mock data
+        const mockOptionRequest = {
+            s: 100,
+            k: 105,
+            tau: 0.25,
+            r: 0.05,
+            sigma: 0.2
+        };
+
+        const mockBlackScholesResult = {
+            callPrice: 2.1234,
+            putPrice: 6.5678,
+            model: 'Black-Scholes',
+            responseTime: 15
+        };
+
+        const mockGreeks = {
+            delta: 0.456789,
+            gamma: 0.012345,
+            theta: -0.098765,
+            vega: 0.234567,
+            rho: 0.345678
+        };
+
+        const mockFFTSurfaceData = [
+            { strike: 95, callPrice: 7.1234, putPrice: 1.5678 },
+            { strike: 100, callPrice: 4.2345, putPrice: 3.6789 },
+            { strike: 105, callPrice: 2.3456, putPrice: 6.7890 }
+        ];
+
+        // Export utility functions (simplified versions)
+        function exportToCSV(data) {
+            if (Array.isArray(data)) {
+                // FFT surface data export
+                const headers = ['Strike', 'Call Price', 'Put Price'];
+                const rows = data.map(row => [
+                    row.strike.toFixed(2),
+                    row.callPrice.toFixed(4),
+                    row.putPrice.toFixed(4)
+                ]);
+                
+                return [headers, ...rows]
+                    .map(row => row.join(','))
+                    .join('\\n');
+            }
+
+            // Single pricing result export
+            const headers = [];
+            const values = [];
+
+            // Basic info
+            headers.push('Timestamp', 'Model');
+            values.push(data.timestamp, data.model);
+
+            // Parameters
+            Object.entries(data.parameters).forEach(([key, value]) => {
+                headers.push(`Parameter_${key.toUpperCase()}`);
+                values.push(String(value));
+            });
+
+            // Results
+            if ('callPrice' in data.results) {
+                headers.push('Call_Price', 'Put_Price', 'Response_Time_ms');
+                values.push(
+                    data.results.callPrice.toFixed(4),
+                    data.results.putPrice.toFixed(4),
+                    String(data.results.responseTime)
+                );
+            }
+
+            // Greeks
+            if (data.greeks) {
+                Object.entries(data.greeks).forEach(([key, value]) => {
+                    headers.push(`Greek_${key.toUpperCase()}`);
+                    values.push(value.toFixed(6));
+                });
+            }
+
+            return [headers.join(','), values.join(',')].join('\\n');
+        }
+
+        function exportToJSON(data) {
+            return JSON.stringify(data, null, 2);
+        }
+
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Test functions
+        function testBlackScholesCSV() {
+            const exportData = {
+                timestamp: new Date().toISOString(),
+                model: mockBlackScholesResult.model,
+                parameters: mockOptionRequest,
+                results: mockBlackScholesResult,
+                greeks: mockGreeks
+            };
+
+            const csv = exportToCSV(exportData);
+            document.getElementById('bs-output').textContent = csv;
+            
+            // Also trigger download
+            downloadFile(csv, 'test_black_scholes.csv', 'text/csv');
+        }
+
+        function testBlackScholesJSON() {
+            const exportData = {
+                timestamp: new Date().toISOString(),
+                model: mockBlackScholesResult.model,
+                parameters: mockOptionRequest,
+                results: mockBlackScholesResult,
+                greeks: mockGreeks
+            };
+
+            const json = exportToJSON(exportData);
+            document.getElementById('bs-output').textContent = json;
+            
+            // Also trigger download
+            downloadFile(json, 'test_black_scholes.json', 'application/json');
+        }
+
+        function testFFTSurfaceCSV() {
+            const csv = exportToCSV(mockFFTSurfaceData);
+            document.getElementById('fft-output').textContent = csv;
+            
+            // Also trigger download
+            downloadFile(csv, 'test_fft_surface.csv', 'text/csv');
+        }
+
+        function testFFTSurfaceJSON() {
+            const json = exportToJSON(mockFFTSurfaceData);
+            document.getElementById('fft-output').textContent = json;
+            
+            // Also trigger download
+            downloadFile(json, 'test_fft_surface.json', 'application/json');
+        }
+    </script>
+</body>
+</html>

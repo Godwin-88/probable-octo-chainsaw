@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { cacheGet, optimizationPlanCacheKey } from "../lib/redis.js";
+import { cacheGet, optimizationPlanCacheKey, appendActivity } from "../lib/redis.js";
+import { getPublicRpcUrl } from "../lib/chains.js";
 
 export const executeRouter = Router();
 
@@ -26,12 +27,21 @@ executeRouter.get("/plan/:optimizationId", async (req, res) => {
 
 executeRouter.post("/signed", async (req, res) => {
   try {
-    const { chainId, signedTxHex } = req.body as { chainId?: string; signedTxHex?: string };
+    const { chainId, signedTxHex, walletOrSessionId } = req.body as {
+      chainId?: string;
+      signedTxHex?: string;
+      walletOrSessionId?: string;
+    };
     if (!signedTxHex) {
       res.status(400).json({ error: "signedTxHex required" });
       return;
     }
-    const RPC_URL = process.env.RPC_URL_ETHEREUM ?? process.env.RPC_URL_SEPOLIA ?? "https://eth.llamarpc.com";
+    const chain = chainId ?? "ethereum";
+    const RPC_URL =
+      getPublicRpcUrl(chain) ??
+      process.env.RPC_URL_ETHEREUM ??
+      process.env.RPC_URL_SEPOLIA ??
+      "https://eth.llamarpc.com";
     const r = await fetch(RPC_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -46,6 +56,13 @@ executeRouter.post("/signed", async (req, res) => {
     if (data.error) {
       res.status(400).json({ error: data.error.message ?? "Broadcast failed" });
       return;
+    }
+    if (data.result) {
+      await appendActivity(walletOrSessionId ?? "default", {
+        txHash: data.result,
+        chain,
+        timestamp: new Date().toISOString(),
+      }).catch(() => {});
     }
     res.json({ txHash: data.result });
   } catch (err) {

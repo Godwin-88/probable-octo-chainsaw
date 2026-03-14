@@ -1,0 +1,21 @@
+FROM node:20-alpine AS base
+WORKDIR /app
+
+FROM base AS deps
+COPY mcp-server-yield-agent/package*.json ./
+RUN npm install
+
+FROM base AS build
+COPY --from=deps /app/node_modules ./node_modules
+COPY mcp-server-yield-agent/ ./
+RUN npm run build
+
+FROM base AS runner
+RUN apk add --no-cache curl
+ENV NODE_ENV=production
+ENV PORT=3001
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package*.json ./
+RUN npm install --omit=dev
+EXPOSE 3001
+CMD ["node", "dist/index.js"]

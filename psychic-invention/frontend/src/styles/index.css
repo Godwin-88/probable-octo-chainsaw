@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-slate-600;
+  }
+  
+  html, body {
+    font-family: 'Inter', system-ui, sans-serif;
+    @apply bg-slate-900 text-white min-h-screen;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-white font-semibold;
+  }
+  
+  p {
+    @apply text-slate-300;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold px-8 py-4 rounded-lg 
+           hover:from-blue-700 hover:to-blue-800 transition-all duration-200 
+           shadow-lg hover:shadow-blue-500/25 focus:outline-none focus:ring-2 focus:ring-blue-500;
+  }
+  
+  .btn-secondary {
+    @apply bg-slate-700 text-white font-semibold px-8 py-4 rounded-lg border border-slate-600
+           hover:bg-slate-600 hover:border-blue-500 transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-slate-500;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-blue-500 text-blue-400 font-semibold px-8 py-4 rounded-lg
+           hover:bg-blue-500 hover:text-white transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-blue-500;
+  }
+  
+  .card {
+    @apply bg-slate-800 border border-slate-700 rounded-xl p-8 shadow-xl hover:shadow-blue-500/10 transition-all duration-300;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400
+           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200;
+  }
+  
+  .metric-card {
+    @apply bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-600 rounded-lg p-6 text-center
+           hover:border-blue-500 transition-all duration-300;
+  }
+  
+  .glow-text {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600;
+  }
+  
+  .section-padding {
+    @apply py-20 px-4 sm:px-6 lg:px-8;
+  }
+  
+  .container {
+    @apply max-w-7xl mx-auto;
+  }
+
+  .stage-label {
+    @apply text-xs uppercase tracking-[0.3em] text-slate-400 mb-3 font-semibold;
+  }
+
+  .stat-card {
+    @apply bg-slate-900/60 border border-slate-800 rounded-xl p-4 shadow-inner;
+  }
+
+  .status-dot {
+    @apply inline-block w-2.5 h-2.5 rounded-full;
+  }
+
+  .tag-pill {
+    @apply px-3 py-1 rounded-full border border-slate-700 text-xs uppercase tracking-widest text-slate-300 bg-slate-900/60;
+  }
+
+  .workspace-tab {
+    @apply flex-1 text-center py-4 text-sm font-semibold uppercase tracking-widest text-slate-400 hover:text-white transition;
+  }
+
+  .workspace-tab.active {
+    @apply text-white bg-slate-900 border-b-2 border-primary-500;
+  }
+
+  .workspace-panel {
+    @apply p-8;
+  }
+
+  .result-tile {
+    @apply bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-4;
+  }
+
+  .metric-pill {
+    @apply bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-3 flex flex-col;
+  }
+
+  .empty-state {
+    @apply border border-dashed border-slate-800 rounded-xl p-6 text-center bg-slate-900/40;
+  }
+}

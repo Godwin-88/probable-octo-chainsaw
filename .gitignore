@@ -1,3 +1,9 @@
+# --- Binary / large reference files (never push) ---
+*.pdf
+*.PDF
+knowledge_base/
+web3/
+
 # --- Sensitive / local-only (do not push) ---
 .env
 .env.local

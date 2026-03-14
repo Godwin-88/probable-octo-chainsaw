@@ -17,19 +17,24 @@ flowchart LR
   end
   subgraph gateway [gateway-wdk]
     REST[REST_API]
+    V2[Web3_V2_Modules]
     WDK_Read[WDK_ReadOnly_Portfolio]
     Auth[Auth_Nonce_Verify]
     Broadcast[Broadcast_Signed_Tx]
+    Relay[Relays_Flashbots_MEVBlocker]
   end
   subgraph frontend [Frontend]
     UI[React_UI]
   end
   UI --> REST
   Wallet --> REST
+  REST --> V2
   REST --> WDK_Read
   REST --> Auth
   REST --> Broadcast
+  V2 --> Relay
   WDK_Read --> Redis[(Redis_Cache)]
+  V2 --> Redis
 ```
 
 ## Package and modules
@@ -81,9 +86,15 @@ sequenceDiagram
 
 | Feature | Implementation |
 |--------|----------------|
-| **Portfolio** | `WalletAccountReadOnlyEvm(address, { provider: RPC_URL })` for ETH, USDT, USDC. Results cached in Redis (TTL 120s). |
+| **Portfolio** | `WalletAccountReadOnlyEvm(address, { provider: RPC_URL })` for native + dynamically resolved token symbols (default `USDT,USDC`). Results cached in Redis (TTL 120s). |
 | **Auth** | `GET /api/auth/nonce?walletAddress=0x...` returns nonce; `POST /api/auth/verify` with `{ walletAddress, signature, message }` verifies via `ethers.recoverAddress` and returns a session token. |
 | **Execute** | Plan from AI core cached in Redis. `GET /api/execute/plan/:optimizationId` returns the plan. `POST /api/execute/signed` with `{ signedTxHex }` broadcasts via `eth_sendRawTransaction`. |
+| **Web3-native v2 endpoints** | `/v2` adds dynamic chains registry, universe snapshot, oracle/pool data, positions, swap simulation, MEV relay routing, opportunities, bundles, tx audit trail, and agent autonomy state. |
+
+### Multi-chain status (important)
+
+- **EVM** (`ethereum`, `sepolia`, `polygon`): implemented in gateway portfolio and execution/broadcast.
+- **Non‑EVM** (`solana`, `ton`, `tron`): the UI supports selecting these chains, but server-side read-only balances require the corresponding WDK wallet modules to be installed and wired. Until then, the gateway may return empty positions for these chains.
 
 ## API summary
 
@@ -96,3 +107,24 @@ sequenceDiagram
 | GET | /ws/progress?optimizationId=... | WebSocket stream of optimization progress. |
 | GET | /api/execute/plan/:optimizationId | Cached optimization plan. |
 | POST | /api/execute/signed | Body: `signedTxHex`. Broadcasts tx (non-custodial). |
+| POST | /api/agent/chat | Body: `message`, optional `sessionId`. Proxies to OpenClaw when `OPENCLAW_GATEWAY_URL` is set. |
+
+### Web3-native v2 API (gateway)
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | /v2/chains | Dynamic chain discovery for UI + agent. |
+| GET | /v2/universe/snapshot | Data Universe snapshot (tokens/prices/optional positions). |
+| GET | /v2/positions/:walletOrAgentId?chain=ethereum | Positions (portfolio alias) in v2 response shape. |
+| GET | /v2/oracles/price/:tokenPair?chain=ethereum | Oracle price (Pyth→CoinGecko fallback; reconciles when both available). |
+| GET | /v2/pool/:poolAddress?chain=ethereum | Pool state via EVM `eth_call` (Uniswap V2/V3 style). |
+| POST | /v2/simulate/swap | Swap quote + slippage estimate (EVM Uniswap V2 `getAmountsOut`). |
+| POST | /v2/protect/submit | Broadcast signed tx via public RPC or MEV relay (Flashbots Protect / MEV Blocker) depending on `protection`. |
+| GET | /v2/opportunities | Opportunities list (proxied from ai-core `/assets/search?type=opportunity`). |
+| POST | /v2/submit/bundle | Bundle submit (EVM Flashbots `eth_sendBundle`, Ethereum mainnet only). |
+| GET | /v2/activity?wallet=... | Tx audit trail (Redis-backed; includes explorer links). |
+| POST | /v2/agent/toggle | Persist agent autonomy state in Redis (UI toggle sync + future enforcement hook). |
+
+## OpenClaw and WDK
+
+When using **OpenClaw** for agent orchestration (recommended by the hackathon), the agent uses the **Tether WDK skill** for wallet and transaction semantics and the **Yield-Agent MCP** tools for portfolio and optimization. The MCP server calls the same gateway APIs (portfolio, optimize, execute/plan, execute/signed) described above. Execution remains non-custodial: the agent suggests actions and the user signs in their wallet; the gateway only broadcasts. See [docs/OPENCLAW_INTEGRATION.md](OPENCLAW_INTEGRATION.md) for setup and config.

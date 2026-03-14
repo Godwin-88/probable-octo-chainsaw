@@ -1,0 +1,10 @@
+C:\Users\ThinkPad\Documents\WQU\PortFolio Management\psychic-invention\target\debug\deps\memoffset-bc4c02c183254c51.d: C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\lib.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\raw_field.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\offset_of.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\span_of.rs
+
+C:\Users\ThinkPad\Documents\WQU\PortFolio Management\psychic-invention\target\debug\deps\libmemoffset-bc4c02c183254c51.rlib: C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\lib.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\raw_field.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\offset_of.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\span_of.rs
+
+C:\Users\ThinkPad\Documents\WQU\PortFolio Management\psychic-invention\target\debug\deps\libmemoffset-bc4c02c183254c51.rmeta: C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\lib.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\raw_field.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\offset_of.rs C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\span_of.rs
+
+C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\lib.rs:
+C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\raw_field.rs:
+C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\offset_of.rs:
+C:\Users\ThinkPad\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\memoffset-0.6.5\src\span_of.rs:

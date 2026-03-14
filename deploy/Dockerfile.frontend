@@ -1,12 +1,17 @@
+# Single frontend: TRANSACT (psychic-invention) — quant workspaces + DeFi/Yield
+# Build from repo root: docker build -f deploy/Dockerfile.frontend -t yield-agent-frontend .
 FROM node:20-alpine AS builder
 WORKDIR /app
-COPY frontend/package*.json ./
+COPY psychic-invention/frontend/package*.json ./
 RUN npm install
-COPY frontend/ ./
+COPY psychic-invention/frontend/ ./
+# Gateway for DeFi (portfolio, optimize, plan) and for proxied TRANSACT quant API at /api/transact
 ARG VITE_GATEWAY_URL=http://localhost:3000
 ARG VITE_WS_URL=ws://localhost:3000
+ARG VITE_API_URL=http://localhost:3000/api/transact
 ENV VITE_GATEWAY_URL=$VITE_GATEWAY_URL
 ENV VITE_WS_URL=$VITE_WS_URL
+ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 FROM nginx:alpine

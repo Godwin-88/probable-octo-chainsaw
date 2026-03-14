@@ -1,0 +1,36 @@
+# One Python gateway: ai-core (gRPC) + TRANSACT FastAPI (REST on 8000)
+# Build from repo root: docker build -f deploy/Dockerfile.ai-core-unified -t ai-core-unified .
+FROM python:3.11-slim AS base
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# ---- ai-core ----
+COPY ai-core/requirements.txt ./ai-core-requirements.txt
+RUN pip install --no-cache-dir -r ai-core-requirements.txt
+
+COPY proto/ /app/proto/
+COPY ai-core/ /app/ai-core/
+WORKDIR /app/ai-core
+RUN python -m grpc_tools.protoc -I/app/proto --python_out=./ai_core --grpc_python_out=./ai_core /app/proto/optimize.proto
+WORKDIR /app
+
+# ---- TRANSACT (psychic-invention) ----
+COPY psychic-invention/requirements.txt ./psychic-invention/requirements.txt
+RUN pip install --no-cache-dir -r psychic-invention/requirements.txt
+
+COPY psychic-invention/ /app/psychic-invention/
+# Optional: build Rust pricing_engine in psychic-invention (if present)
+# RUN cd /app/psychic-invention && maturin build --release 2>/dev/null || true
+
+# ---- Entrypoint ----
+COPY deploy/start_ai_core_unified.sh /app/start_ai_core_unified.sh
+RUN chmod +x /app/start_ai_core_unified.sh
+
+ENV PYTHONPATH=/app/ai-core
+ENV TRANSACT_API_URL=http://127.0.0.1:8000
+
+EXPOSE 50051 8000
+ENTRYPOINT ["/app/start_ai_core_unified.sh"]

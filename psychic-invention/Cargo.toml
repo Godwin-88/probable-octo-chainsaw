@@ -1,0 +1,37 @@
+[package]
+name = "pricing_engine"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+
+[dependencies]
+# 0.22 is the first PyO3 release with Python 3.13 support.
+# gil-refs keeps the old &PyModule / PyObject / into_py APIs working.
+pyo3 = { version = "0.22", features = ["extension-module", "macros", "gil-refs"] }
+statrs = "0.18.0"    # for normal CDF (Gaussian)
+rand = "0.9.1"
+rand_distr = "0.5.1"
+rayon = { version = "1.10.0"}  # optional for parallel
+rustfft = "6.0"
+num-complex = "0.4"
+lazy_static = "1.4"
+
+[dev-dependencies]
+proptest = "1.0"
+approx = "0.5"
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "pricing_benchmarks"
+harness = false
+
+[[bench]]
+name = "simple_benchmarks"
+harness = false
+
+[[bench]]
+name = "performance_benchmarks"
+harness = false

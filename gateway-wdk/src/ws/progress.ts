@@ -1,5 +1,6 @@
 import { WebSocketServer } from "ws";
 import type { Server } from "http";
+import type { IncomingMessage } from "http";
 
 export type OptimizationProgressMessage = {
   optimizationId: string;
@@ -20,21 +21,9 @@ export type OptimizationProgressMessage = {
 
 const subscribers = new Map<string, Set<(msg: OptimizationProgressMessage) => void>>();
 
-export function registerWebSocketProgress(httpServer: Server): void {
-  const wss = new WebSocketServer({ noServer: true });
+const progressWss = new WebSocketServer({ noServer: true });
 
-  httpServer.on("upgrade", (request, socket, head) => {
-    const url = new URL(request.url ?? "", `http://${request.headers.host}`);
-    if (url.pathname !== "/ws/progress") {
-      socket.destroy();
-      return;
-    }
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      wss.emit("connection", ws, request, url);
-    });
-  });
-
-  wss.on("connection", (ws, _req, url) => {
+progressWss.on("connection", (ws: import("ws").WebSocket, _req: IncomingMessage, url: URL) => {
     const optimizationId = url.searchParams.get("optimizationId");
     if (!optimizationId) {
       ws.send(JSON.stringify({ error: "optimizationId query param required" }));
@@ -57,6 +46,24 @@ export function registerWebSocketProgress(httpServer: Server): void {
       if (set?.size === 0) subscribers.delete(optimizationId);
     });
   });
+
+export function registerWebSocketProgress(_httpServer: Server): void {
+  // Upgrade is handled in index via unified upgrade router (tryUpgradeProgress + tryUpgradeV2).
+  // This export kept for API compatibility; progress wss is already created above.
+}
+
+export function tryUpgradeProgress(
+  request: import("http").IncomingMessage,
+  socket: import("stream").Duplex,
+  head: Buffer,
+  pathname: string
+): boolean {
+  if (pathname !== "/ws/progress") return false;
+  const url = new URL(request.url ?? "", `http://${request.headers.host}`);
+  progressWss.handleUpgrade(request, socket, head, (ws) => {
+    progressWss.emit("connection", ws, request, url);
+  });
+  return true;
 }
 
 export function broadcastProgress(

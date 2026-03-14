@@ -1,0 +1,60 @@
+services:
+  # Neo4j Knowledge Graph
+  neo4j:
+    image: neo4j:5.15-community
+    container_name: pricing-engine-neo4j
+    environment:
+      - NEO4J_AUTH=neo4j/pricing-engine-kb
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_memory_heap_initial__size=512M
+      - NEO4J_dbms_memory_heap_max__size=1G
+      - NEO4J_dbms_memory_pagecache_size=256M
+    ports:
+      - "7474:7474"  # Browser
+      - "7687:7687"  # Bolt protocol
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - ./knowledge_base/import:/var/lib/neo4j/import
+    networks:
+      - pricing-network
+    restart: unless-stopped
+
+  # Redis Cache (existing)
+  redis:
+    image: redis:7-alpine
+    container_name: pricing-engine-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - pricing-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # PostgreSQL — Blotter backoffice (double-entry ledger)
+  postgres:
+    image: postgres:16-alpine
+    container_name: pricing-engine-postgres
+    environment:
+      POSTGRES_USER: pricing_engine
+      POSTGRES_PASSWORD: pricing_engine_kb
+      POSTGRES_DB: blotter
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pricing-network
+    restart: unless-stopped
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  redis_data:
+  postgres_data:
+
+networks:
+  pricing-network:
+    driver: bridge

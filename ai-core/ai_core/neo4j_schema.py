@@ -52,6 +52,44 @@ def init_schema(driver) -> None:
                     raise
 
 
+def init_transact_schema(driver) -> None:
+    """TRANSACT (psychic-invention) knowledge graph: TransactFormula, TransactConcept, Menu.
+    Extended with DeFi/Web3 nodes: DeFiProtocol, TradingStrategy, KnowledgeSource.
+    Namespaced so DoraHacks PDF Formula nodes stay separate."""
+    with driver.session() as session:
+        constraints = [
+            "CREATE CONSTRAINT transact_formula_name IF NOT EXISTS FOR (f:TransactFormula) REQUIRE f.name IS UNIQUE",
+            "CREATE CONSTRAINT transact_concept_name IF NOT EXISTS FOR (c:TransactConcept) REQUIRE c.name IS UNIQUE",
+            "CREATE CONSTRAINT menu_name IF NOT EXISTS FOR (m:Menu) REQUIRE m.name IS UNIQUE",
+            # New node types added for DeFi/Web3/AlgoTrading knowledge graph
+            "CREATE CONSTRAINT defi_protocol_name IF NOT EXISTS FOR (p:DeFiProtocol) REQUIRE p.name IS UNIQUE",
+            "CREATE CONSTRAINT trading_strategy_name IF NOT EXISTS FOR (s:TradingStrategy) REQUIRE s.name IS UNIQUE",
+            "CREATE CONSTRAINT knowledge_source_id IF NOT EXISTS FOR (k:KnowledgeSource) REQUIRE k.id IS UNIQUE",
+        ]
+        for cypher in constraints:
+            try:
+                session.run(cypher)
+            except Exception as e:
+                if "EquivalentSchemaRuleAlreadyExists" not in str(e) and "already exists" not in str(e).lower():
+                    raise
+        indexes = [
+            "CREATE INDEX idx_transact_formula_name IF NOT EXISTS FOR (f:TransactFormula) ON (f.name)",
+            "CREATE INDEX idx_transact_concept_name IF NOT EXISTS FOR (c:TransactConcept) ON (c.name)",
+            "CREATE INDEX idx_transact_concept_domain IF NOT EXISTS FOR (c:TransactConcept) ON (c.domain)",
+            "CREATE INDEX idx_transact_formula_domain IF NOT EXISTS FOR (f:TransactFormula) ON (f.domain)",
+            "CREATE INDEX idx_defi_protocol_category IF NOT EXISTS FOR (p:DeFiProtocol) ON (p.category)",
+            "CREATE INDEX idx_trading_strategy_category IF NOT EXISTS FOR (s:TradingStrategy) ON (s.category)",
+            "CREATE INDEX idx_knowledge_source_domain IF NOT EXISTS FOR (k:KnowledgeSource) ON (k.domain)",
+            "CREATE INDEX idx_knowledge_source_category IF NOT EXISTS FOR (k:KnowledgeSource) ON (k.category)",
+        ]
+        for cypher in indexes:
+            try:
+                session.run(cypher)
+            except Exception as e:
+                if "EquivalentSchemaRuleAlreadyExists" not in str(e) and "already exists" not in str(e).lower():
+                    raise
+
+
 def seed_minimal(driver) -> None:
     """Seed minimal chains, protocols, assets, and opportunities for demo."""
     with driver.session() as session:
@@ -121,6 +159,7 @@ def init_and_seed() -> None:
     try:
         driver.verify_connectivity()
         init_schema(driver)
+        init_transact_schema(driver)
         seed_minimal(driver)
         print("Neo4j schema and seed data applied.")
     finally:

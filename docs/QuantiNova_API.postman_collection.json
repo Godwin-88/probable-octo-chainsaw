@@ -1,0 +1,1046 @@
+{
+  "info": {
+    "_postman_id": "b9bf0d3d-1c3b-4e5f-8b86-0e97d6c3f2a1",
+    "name": "QuantiNova API – Full Stack (Gateway + AI Core + MCP + OpenClaw)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Complete API smoke-test collection for the Dynamic Yield Optimization Agent stack.\n\nCovers:\n  • Gateway REST /api (portfolio, auth, optimize, execute, agent chat)\n  • Gateway Web3-native /v2 (chains, universe, positions, oracle, pool, swap, bundles, MEV relay, opportunities, activity, autonomy)\n  • AI Core / TRANSACT HTTP (VaR, moments, explain, funding, factors, scenarios, asset search)\n  • Yield-Agent MCP Server (all 7 JSON-RPC 2.0 tools)\n  • OpenClaw agent chat proxy\n\nVariables to set before running:\n  gatewayUrl  – default http://localhost:3000\n  aiCoreUrl   – default http://localhost:8000\n  mcpUrl      – default http://localhost:3001\n  wallet      – any valid EVM address\n  optimizationId – set after running 'Optimize (start)'"
+  },
+  "variable": [
+    { "key": "gatewayUrl",      "value": "http://localhost:3000",                              "type": "string" },
+    { "key": "aiCoreUrl",       "value": "http://localhost:8000",                              "type": "string" },
+    { "key": "mcpUrl",          "value": "http://localhost:3001",                              "type": "string" },
+    { "key": "wallet",          "value": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",         "type": "string" },
+    { "key": "chain",           "value": "ethereum",                                           "type": "string" },
+    { "key": "tokenPair",       "value": "ETH-USDT",                                           "type": "string" },
+    { "key": "assets",          "value": "ETH,BTC,USDC,USDT",                                  "type": "string" },
+    { "key": "include",         "value": "tokens,prices",                                      "type": "string" },
+    { "key": "quote",           "value": "USDT",                                               "type": "string" },
+    { "key": "poolAddress",     "value": "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc",         "type": "string" },
+    { "key": "weth",            "value": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",         "type": "string" },
+    { "key": "usdc",            "value": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",         "type": "string" },
+    { "key": "signedTxHex",     "value": "0xdeadbeef",                                         "type": "string" },
+    { "key": "walletOrSessionId","value": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",        "type": "string" },
+    { "key": "agentId",         "value": "default",                                            "type": "string" },
+    { "key": "optimizationId",  "value": "",                                                   "type": "string" },
+    { "key": "sessionToken",    "value": "",                                                   "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "0 – Health Checks",
+      "description": "Verify all services are up before running other requests.",
+      "item": [
+        {
+          "name": "Gateway health",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Service ok', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "Returns {status:'ok', service:'gateway-wdk'}",
+            "url": "{{gatewayUrl}}/health"
+          }
+        },
+        {
+          "name": "MCP server health",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Service ok', () => pm.expect(pm.response.json().service).to.eql('yield-agent-mcp'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "Returns {status:'ok', service:'yield-agent-mcp'}",
+            "url": "{{mcpUrl}}/health"
+          }
+        },
+        {
+          "name": "AI Core cache health",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 or 503', () => pm.expect(pm.response.code).to.be.oneOf([200, 503]));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "Redis-backed health check. Returns {status:'ok'} if Redis is connected.",
+            "url": "{{aiCoreUrl}}/cache/health"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "1 – Gateway Legacy /api",
+      "description": "Original REST API used by the React frontend and proxied by the Yield-Agent MCP server.",
+      "item": [
+        {
+          "name": "Auth – Get nonce (SIWE)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has nonce', () => pm.expect(pm.response.json()).to.have.property('nonce'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "Generate a nonce for Sign-In with Wallet (EIP-4361). Pass walletAddress, use returned nonce in auth/verify.",
+            "url": "{{gatewayUrl}}/api/auth/nonce?walletAddress={{wallet}}"
+          }
+        },
+        {
+          "name": "Auth – Verify signature (SIWE)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "if (j.token) pm.collectionVariables.set('sessionToken', j.token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Verify EIP-4361 wallet signature. Returns a session token on success. Replace signature and message with real values from your wallet.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"walletAddress\": \"{{wallet}}\",\n  \"signature\": \"0xdeadbeef\",\n  \"message\": \"Sign this message to authenticate with QuantiNova. Nonce: abc123\"\n}"
+            },
+            "url": "{{gatewayUrl}}/api/auth/verify"
+          }
+        },
+        {
+          "name": "Portfolio – Get wallet balances",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has positions', () => pm.expect(pm.response.json()).to.have.property('positions'));",
+            "pm.test('Has totalUsd', () => pm.expect(pm.response.json()).to.have.property('totalUsd'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "WDK read-only portfolio. Returns native + ERC-20 balances (USDT, USDC by default) with USD values. Results cached 120 s in Redis.",
+            "url": "{{gatewayUrl}}/api/portfolio?walletAddress={{wallet}}&chainId={{chain}}"
+          }
+        },
+        {
+          "name": "Optimize – Start optimization",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 202', () => pm.response.to.have.status(202));",
+            "pm.test('Has optimizationId', () => pm.expect(pm.response.json()).to.have.property('optimizationId'));",
+            "const j = pm.response.json();",
+            "if (j.optimizationId) pm.collectionVariables.set('optimizationId', j.optimizationId);",
+            "console.log('optimizationId:', pm.collectionVariables.get('optimizationId'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Triggers async optimization via gRPC to ai-core. Returns optimizationId immediately. Use 'Execute – Fetch plan' after ~3-5s to retrieve the result. Subscribe to ws://localhost:3000/ws/progress?optimizationId=<id> for live progress.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"walletAddress\": \"{{wallet}}\",\n  \"constraints\": {\n    \"riskTolerance\": \"medium\",\n    \"targetChains\": [\"ethereum\"],\n    \"maxGasCostUsd\": 20\n  }\n}"
+            },
+            "url": "{{gatewayUrl}}/api/optimize"
+          }
+        },
+        {
+          "name": "Execute – Fetch optimization plan",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 or 404', () => pm.expect(pm.response.code).to.be.oneOf([200, 404]));",
+            "if (pm.response.code === 200) {",
+            "  pm.test('Has actions', () => pm.expect(pm.response.json()).to.have.property('actions'));",
+            "}"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "Retrieve the cached optimization plan from Redis. Returns 404 if the plan is not yet ready (ai-core still computing) or has expired. Run 'Optimize – Start optimization' first and set {{optimizationId}}.",
+            "url": "{{gatewayUrl}}/api/execute/plan/{{optimizationId}}"
+          }
+        },
+        {
+          "name": "Execute – Broadcast signed tx (non-custodial)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has txHash or error', () => {",
+            "  const j = pm.response.json();",
+            "  pm.expect(j).to.satisfy(r => r.txHash || r.error);",
+            "});"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Broadcast an already-signed raw transaction hex. Non-custodial: server never signs. Replace signedTxHex with a real signed tx from your wallet. Gateway calls eth_sendRawTransaction on the specified chain.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chainId\": \"{{chain}}\",\n  \"signedTxHex\": \"{{signedTxHex}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/api/execute/signed"
+          }
+        },
+        {
+          "name": "Agent chat – Proxy to OpenClaw",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Not 503', () => pm.expect(pm.response.code).to.not.eql(503));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Gateway proxies this to OpenClaw at OPENCLAW_GATEWAY_URL (default http://openclaw:18789). Returns 503 if OPENCLAW_GATEWAY_URL is not set or OpenClaw is down. Requires chat completions enabled in OpenClaw.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Get portfolio for {{wallet}} on ethereum\",\n  \"sessionId\": \"{{walletOrSessionId}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/api/agent/chat"
+          }
+        },
+        {
+          "name": "TRANSACT proxy – Funding rates (via gateway)",
+          "request": {
+            "method": "GET",
+            "description": "Gateway proxies /api/transact/* to AI_CORE_HTTP_URL (ai-core:8000). Same as hitting aiCoreUrl/funding directly.",
+            "url": "{{gatewayUrl}}/api/transact/funding?symbol=ETH&include_series=true"
+          }
+        },
+        {
+          "name": "TRANSACT proxy – On-chain factors (via gateway)",
+          "request": {
+            "method": "GET",
+            "description": "Gateway proxies /api/transact/* to AI_CORE_HTTP_URL.",
+            "url": "{{gatewayUrl}}/api/transact/factors/onchain?chain={{chain}}&limit=30"
+          }
+        },
+        {
+          "name": "WebSocket – Optimization progress (reference)",
+          "request": {
+            "method": "GET",
+            "description": "Open this URL in Postman's WebSocket tab (or wscat) after starting an optimization. Streams JSON progress events: {status, progress, summary, plan?}. States: FETCHING_DATA → COMPUTING_GRAPH → GENERATING_PLAN → WAITING_FOR_SIGNATURE → DONE.",
+            "url": "{{gatewayUrl}}/ws/progress?optimizationId={{optimizationId}}"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "2 – Gateway Web3-Native /v2",
+      "description": "Web3-native REST + WebSocket surface for chain discovery, oracle pricing, pool state, swap simulation, MEV relay, bundles, activity, and agent autonomy.",
+      "item": [
+        {
+          "name": "Chains – Dynamic discovery",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has chains array', () => pm.expect(pm.response.json().chains).to.be.an('array'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "Returns runtime chain registry. Used by the frontend and agent UI to populate chain selectors dynamically. Each entry includes id, name, kind (evm/solana/etc), chainId, configured.",
+            "url": "{{gatewayUrl}}/v2/chains"
+          }
+        },
+        {
+          "name": "Universe – Data snapshot (tokens + prices)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "Builds a single structured snapshot for UI and agent consumption. Query params: chains (comma-separated slugs), assets (symbols/names/addresses), quote (default USDT), include (tokens,prices,positions). Add wallet param when include=positions.",
+            "url": "{{gatewayUrl}}/v2/universe/snapshot?chains={{chain}}&assets={{assets}}&quote={{quote}}&include={{include}}"
+          }
+        },
+        {
+          "name": "Universe – With positions (requires wallet)",
+          "request": {
+            "method": "GET",
+            "description": "Same as universe snapshot but also fetches wallet positions. Requires wallet query param.",
+            "url": "{{gatewayUrl}}/v2/universe/snapshot?chains={{chain}}&assets={{assets}}&quote={{quote}}&include=tokens,prices,positions&wallet={{wallet}}"
+          }
+        },
+        {
+          "name": "Positions – v2 shape",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has positions', () => pm.expect(pm.response.json()).to.have.property('positions'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "v2-shaped portfolio response backed by gateway portfolio service (WDK read-only). Alias for /api/portfolio with v2 response envelope.",
+            "url": "{{gatewayUrl}}/v2/positions/{{wallet}}?chain={{chain}}"
+          }
+        },
+        {
+          "name": "Oracle – Price (Pyth + CoinGecko)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has price', () => pm.expect(pm.response.json()).to.have.property('price'));",
+            "pm.test('Has source', () => pm.expect(pm.response.json()).to.have.property('source'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "Returns off-chain oracle price for a token pair (e.g. ETH-USDT). Priority: Pyth Hermes (fresh ≤30s) → CoinGecko fallback. If both available, reconciles and rejects if deviation >2%. Resolves both legs dynamically (no hardcoded pair mappings).",
+            "url": "{{gatewayUrl}}/v2/oracles/price/{{tokenPair}}?chain={{chain}}"
+          }
+        },
+        {
+          "name": "Oracle – Price with DEX hint",
+          "request": {
+            "method": "GET",
+            "description": "Same as oracle price but with optional dex param for context.",
+            "url": "{{gatewayUrl}}/v2/oracles/price/{{tokenPair}}?chain={{chain}}&dex=uniswap"
+          }
+        },
+        {
+          "name": "Oracle – BTC-USDT price",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/v2/oracles/price/BTC-USDT?chain=ethereum"
+          }
+        },
+        {
+          "name": "Pool – State via eth_call (EVM)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "Fetch pool state via EVM eth_call. Tries Uniswap V2 getReserves() first (reserve0, reserve1), then Uniswap V3 slot0() (sqrtPriceX96, tick). Default poolAddress is USDC/WETH Uniswap V2 pool.",
+            "url": "{{gatewayUrl}}/v2/pool/{{poolAddress}}?chain={{chain}}"
+          }
+        },
+        {
+          "name": "Pool – Uniswap V2 USDC/WETH (known address)",
+          "request": {
+            "method": "GET",
+            "description": "Real Uniswap V2 USDC/WETH pool on Ethereum mainnet.",
+            "url": "{{gatewayUrl}}/v2/pool/0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc?chain=ethereum"
+          }
+        },
+        {
+          "name": "Swap – Simulate (Uniswap V2 getAmountsOut)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has expectedOut', () => pm.expect(pm.response.json()).to.have.property('expectedOut'));",
+            "pm.test('Has slippage', () => pm.expect(pm.response.json()).to.have.property('slippage'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Uniswap V2 swap simulation via eth_call to router getAmountsOut. Returns expectedOut (wei), slippage (vs oracle reference), mevRiskScore. Router address from UNISWAP_V2_ROUTER_<CHAIN> env var.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amountIn\": \"100000000000000000\",\n  \"path\": [\"{{weth}}\", \"{{usdc}}\"],\n  \"chain\": \"{{chain}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/v2/simulate/swap"
+          }
+        },
+        {
+          "name": "Swap – Simulate USDC → WETH (reverse path)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amountIn\": \"1000000000\",\n  \"path\": [\"{{usdc}}\", \"{{weth}}\"],\n  \"chain\": \"{{chain}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/v2/simulate/swap"
+          }
+        },
+        {
+          "name": "Bundle – Simulate (adversarial ordering preview)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Bundle simulation stub. Returns simulatedPnl and adversarialOrderings preview. Stub implementation — full adversarial reordering is a future enhancement.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"signedTxs\": [\"{{signedTxHex}}\"],\n  \"chain\": \"{{chain}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/v2/simulate/bundle"
+          }
+        },
+        {
+          "name": "Bundle – Submit (Flashbots eth_sendBundle, mainnet only)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Submit a Flashbots bundle via eth_sendBundle. Ethereum mainnet only. Uses FLASHBOTS_RELAY_URL (default https://relay.flashbots.net). Replace signedTxHex with real signed transactions.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"signedTxs\": [\"{{signedTxHex}}\"],\n  \"chain\": \"ethereum\"\n}"
+            },
+            "url": "{{gatewayUrl}}/v2/submit/bundle"
+          }
+        },
+        {
+          "name": "MEV Protect – Submit via Flashbots Protect",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Route signed tx via MEV-protected relay. protection: 'flashbots-protect' uses FLASHBOTS_RPC_URL, 'mev-blocker' uses MEV_BLOCKER_RPC_URL, omit for public RPC. Appends txHash to Redis activity log for walletOrSessionId.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"signedTxHex\": \"{{signedTxHex}}\",\n  \"chain\": \"{{chain}}\",\n  \"protection\": \"flashbots-protect\",\n  \"walletOrSessionId\": \"{{walletOrSessionId}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/v2/protect/submit"
+          }
+        },
+        {
+          "name": "MEV Protect – Submit via MEV Blocker",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"signedTxHex\": \"{{signedTxHex}}\",\n  \"chain\": \"{{chain}}\",\n  \"protection\": \"mev-blocker\",\n  \"walletOrSessionId\": \"{{walletOrSessionId}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/v2/protect/submit"
+          }
+        },
+        {
+          "name": "Opportunities – Neo4j-backed list",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has opportunities', () => pm.expect(pm.response.json()).to.have.property('opportunities'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "Returns DeFi opportunities from the Neo4j knowledge graph via ai-core /assets/search?type=opportunity. Results include protocol, asset, APY, risk score, liquidity.",
+            "url": "{{gatewayUrl}}/v2/opportunities?limit=20"
+          }
+        },
+        {
+          "name": "Opportunities – Chain-filtered",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/v2/opportunities?limit=20&chain={{chain}}"
+          }
+        },
+        {
+          "name": "Activity – Tx audit trail",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has items', () => pm.expect(pm.response.json()).to.have.property('items'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "Redis-backed transaction audit trail. Each item includes txHash, chain, timestamp, explorerUrl. Populated by /api/execute/signed and /v2/protect/submit (when walletOrSessionId is provided).",
+            "url": "{{gatewayUrl}}/v2/activity?wallet={{walletOrSessionId}}&limit=20"
+          }
+        },
+        {
+          "name": "Activity – Chain-filtered",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayUrl}}/v2/activity?wallet={{walletOrSessionId}}&limit=20&chain={{chain}}"
+          }
+        },
+        {
+          "name": "Agent – Toggle autonomy ON",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Autonomy true', () => pm.expect(pm.response.json().autonomous).to.be.true);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Persist agent autonomy state in Redis for a given wallet/session. Used by the frontend UI toggle and future enforcement hooks. TTL-based eviction.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"autonomous\": true,\n  \"sessionOrWalletId\": \"{{walletOrSessionId}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/v2/agent/toggle"
+          }
+        },
+        {
+          "name": "Agent – Toggle autonomy OFF",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"autonomous\": false,\n  \"sessionOrWalletId\": \"{{walletOrSessionId}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/v2/agent/toggle"
+          }
+        },
+        {
+          "name": "WebSocket – v2 positions stream (reference)",
+          "request": {
+            "method": "GET",
+            "description": "Open in Postman WebSocket tab. Sends connected message + periodic heartbeats. Full streaming can be wired to live indexer updates.",
+            "url": "{{gatewayUrl}}/v2/ws/positions/{{wallet}}"
+          }
+        },
+        {
+          "name": "WebSocket – v2 opportunities feed (reference)",
+          "request": {
+            "method": "GET",
+            "description": "Open in Postman WebSocket tab. Sends initial opportunities payload and refreshes periodically.",
+            "url": "{{gatewayUrl}}/v2/ws/opportunities"
+          }
+        },
+        {
+          "name": "WebSocket – v2 agent status (reference)",
+          "request": {
+            "method": "GET",
+            "description": "Open in Postman WebSocket tab. Sends agent_status payload including autonomous state if set in Redis.",
+            "url": "{{gatewayUrl}}/v2/ws/agent/{{agentId}}"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "3 – AI Core / TRANSACT (port 8000)",
+      "description": "Unified Python container: gRPC on 50051 + TRANSACT FastAPI on 8000. Accessible directly or via gateway proxy at /api/transact/*. TRANSACT_API_URL is mandatory — ai-core will not start without it.",
+      "item": [
+        {
+          "name": "VaR – Value at Risk + Expected Shortfall",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Has var_historical or var_parametric', () => {",
+            "  pm.expect(j).to.satisfy(r => r.var_historical !== undefined || r.var_parametric !== undefined || r.VaR !== undefined);",
+            "});"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Compute VaR and Expected Shortfall from a T×N returns matrix. Parameters:\n  returns: T×N matrix (T time periods, N assets)\n  weights: portfolio weights summing to 1 (default: equal weight)\n  alpha: tail probability (default 0.05 = 95% VaR)\n  portfolio_value: NAV in USD for dollar VaR\n  horizon_days: holding period\n  include_monte_carlo: also compute MC-based VaR\n  mc_simulations: number of MC paths",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"returns\": [\n    [0.01, -0.02, 0.005],\n    [-0.03, 0.01, -0.01],\n    [0.02, 0.03, 0.008],\n    [-0.01, -0.02, 0.003],\n    [0.04, 0.01, 0.012]\n  ],\n  \"weights\": [0.5, 0.3, 0.2],\n  \"alpha\": 0.05,\n  \"portfolio_value\": 10000,\n  \"horizon_days\": 1,\n  \"include_monte_carlo\": false,\n  \"mc_simulations\": 1000\n}"
+            },
+            "url": "{{aiCoreUrl}}/risk/var"
+          }
+        },
+        {
+          "name": "VaR – With Monte Carlo",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"returns\": [\n    [0.01, -0.02],\n    [-0.03, 0.01],\n    [0.02, 0.03],\n    [-0.01, -0.02],\n    [0.04, 0.01]\n  ],\n  \"weights\": [0.6, 0.4],\n  \"alpha\": 0.05,\n  \"portfolio_value\": 10000,\n  \"horizon_days\": 1,\n  \"include_monte_carlo\": true,\n  \"mc_simulations\": 5000\n}"
+            },
+            "url": "{{aiCoreUrl}}/risk/var"
+          }
+        },
+        {
+          "name": "Moments – Portfolio return, vol, skew, kurtosis",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Has moment fields', () => {",
+            "  pm.expect(j).to.satisfy(r =>",
+            "    r.portfolio_return !== undefined || r.mean !== undefined || r.expected_return !== undefined",
+            "  );",
+            "});"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Compute portfolio statistical moments: annualised expected return, volatility, skewness, excess kurtosis. Essential for characterising DeFi return distributions (fat-tailed, positively skewed). Use as input for HRP/MVO strategy selection.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"returns\": [\n    [0.01, -0.02, 0.005],\n    [-0.03, 0.01, -0.01],\n    [0.02, 0.03, 0.008],\n    [-0.01, -0.02, 0.003],\n    [0.04, 0.01, 0.012]\n  ],\n  \"weights\": [0.5, 0.3, 0.2],\n  \"market_returns\": null\n}"
+            },
+            "url": "{{aiCoreUrl}}/portfolio/moments"
+          }
+        },
+        {
+          "name": "Explain – Formula from knowledge graph",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Returns a natural-language explanation of a quant formula from the Neo4j knowledge graph (seeded via pdf_ingest from AlgorithmicTradingStrategies/ PDFs). Powers the MCP explain_formula tool.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"formula\",\n  \"target\": \"Sharpe Ratio\"\n}"
+            },
+            "url": "{{aiCoreUrl}}/agents/explain"
+          }
+        },
+        {
+          "name": "Explain – HRP formula",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"formula\",\n  \"target\": \"Hierarchical Risk Parity\"\n}"
+            },
+            "url": "{{aiCoreUrl}}/agents/explain"
+          }
+        },
+        {
+          "name": "Explain – VaR Historical formula",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"formula\",\n  \"target\": \"VaR Historical\"\n}"
+            },
+            "url": "{{aiCoreUrl}}/agents/explain"
+          }
+        },
+        {
+          "name": "Explain – Black-Litterman",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"formula\",\n  \"target\": \"Black-Litterman\"\n}"
+            },
+            "url": "{{aiCoreUrl}}/agents/explain"
+          }
+        },
+        {
+          "name": "Funding – Rates (Binance Futures / perp)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "Fetch perpetual/spot funding rate data for a symbol. include_series=true returns the full historical series for delta-neutral strategy analysis.",
+            "url": "{{aiCoreUrl}}/funding?symbol=ETH&include_series=true"
+          }
+        },
+        {
+          "name": "Funding – BTC series",
+          "request": {
+            "method": "GET",
+            "url": "{{aiCoreUrl}}/funding?symbol=BTC&include_series=true"
+          }
+        },
+        {
+          "name": "Factors – On-chain (TVL, utilization, liquidation risk)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "Returns on-chain risk factors for a chain/protocol: TVL momentum, utilization rate, liquidation risk. Used as factor inputs for MVO and Black-Litterman views.",
+            "url": "{{aiCoreUrl}}/factors/onchain?chain={{chain}}&limit=30"
+          }
+        },
+        {
+          "name": "Factors – Polygon",
+          "request": {
+            "method": "GET",
+            "url": "{{aiCoreUrl}}/factors/onchain?chain=polygon&limit=30"
+          }
+        },
+        {
+          "name": "Assets – Opportunity search",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "description": "Search for yield opportunities from the Neo4j knowledge graph. This endpoint is proxied by /v2/opportunities in the gateway.",
+            "url": "{{aiCoreUrl}}/assets/search?q=all&type=opportunity&count=20"
+          }
+        },
+        {
+          "name": "Scenario – MEV bundle (adversarial ordering)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Simulate the P&L impact of adversarial MEV bundle ordering on a portfolio position. slippage_bps: expected slippage from sandwich/frontrunning in basis points. asset_indices: indices in the returns matrix that are exposed to MEV.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"returns\": [\n    [0.01, -0.01],\n    [0.02, -0.02],\n    [0.0, 0.01]\n  ],\n  \"weights\": [0.5, 0.5],\n  \"slippage_bps\": 50,\n  \"asset_indices\": [0]\n}"
+            },
+            "url": "{{aiCoreUrl}}/scenarios/mev-bundle"
+          }
+        },
+        {
+          "name": "Scenario – Oracle spike (liquidation stress)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Simulate the effect of an oracle price spike on portfolio volatility and liquidation risk. vol_mult: multiplier applied to the target asset's volatility (e.g. 2.0 = 2x vol spike). asset_index: which column in returns to spike.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"returns\": [\n    [0.01, -0.01],\n    [0.02, -0.02],\n    [0.0, 0.01]\n  ],\n  \"weights\": [0.5, 0.5],\n  \"asset_index\": 0,\n  \"vol_mult\": 2.0\n}"
+            },
+            "url": "{{aiCoreUrl}}/scenarios/oracle-spike"
+          }
+        },
+        {
+          "name": "Scenario – Monte Carlo path simulation",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Multi-chain Monte Carlo simulation. use_t_dist=true uses Student-t distribution (fat tails, better for DeFi). df: degrees of freedom for t-distribution. n_paths: number of simulation paths. Returns path percentiles and terminal wealth distribution.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"returns\": [\n    [0.01, -0.01],\n    [0.02, -0.02],\n    [0.0, 0.01],\n    [-0.01, 0.02],\n    [0.03, -0.01]\n  ],\n  \"weights\": [0.5, 0.5],\n  \"portfolio_value\": 10000,\n  \"horizon_days\": 30,\n  \"n_paths\": 1000,\n  \"use_t_dist\": true,\n  \"df\": 5.0\n}"
+            },
+            "url": "{{aiCoreUrl}}/scenarios/monte-carlo"
+          }
+        },
+        {
+          "name": "Scenario – Monte Carlo (normal dist, 90-day)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"returns\": [\n    [0.01, -0.02, 0.005],\n    [-0.03, 0.01, -0.01],\n    [0.02, 0.03, 0.008],\n    [-0.01, -0.02, 0.003],\n    [0.04, 0.01, 0.012]\n  ],\n  \"weights\": [0.5, 0.3, 0.2],\n  \"portfolio_value\": 50000,\n  \"horizon_days\": 90,\n  \"n_paths\": 2000,\n  \"use_t_dist\": false,\n  \"df\": 5.0\n}"
+            },
+            "url": "{{aiCoreUrl}}/scenarios/monte-carlo"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "4 – Yield-Agent MCP Server (JSON-RPC 2.0)",
+      "description": "MCP server at port 3001 exposes 7 tools for OpenClaw agent orchestration. Transport: HTTP JSON-RPC 2.0 (POST /mcp or POST /). TRANSACT_API_URL must be set or the server will refuse to start.",
+      "item": [
+        {
+          "name": "MCP – Initialize handshake",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Protocol version present', () => pm.expect(pm.response.json().result.protocolVersion).to.be.a('string'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "MCP protocol initialize handshake. Returns protocolVersion, serverInfo, and capabilities.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"initialize\",\n  \"params\": {\n    \"protocolVersion\": \"2024-11-05\",\n    \"clientInfo\": { \"name\": \"postman\", \"version\": \"1.0\" }\n  }\n}"
+            },
+            "url": "{{mcpUrl}}/mcp"
+          }
+        },
+        {
+          "name": "MCP – tools/list (discover all 7 tools)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const tools = pm.response.json().result.tools;",
+            "pm.test('7 tools returned', () => pm.expect(tools.length).to.eql(7));",
+            "const names = tools.map(t => t.name);",
+            "['get_portfolio','run_optimization','get_optimization_plan','broadcast_signed_tx',",
+            " 'quant_var','quant_moments','explain_formula'].forEach(n => {",
+            "  pm.test('Tool: ' + n, () => pm.expect(names).to.include(n));",
+            "});"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "List all registered MCP tools. Expects 7 tools: get_portfolio, run_optimization, get_optimization_plan, broadcast_signed_tx, quant_var, quant_moments, explain_formula.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"tools/list\"\n}"
+            },
+            "url": "{{mcpUrl}}/mcp"
+          }
+        },
+        {
+          "name": "MCP Tool – get_portfolio",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('No error', () => pm.expect(pm.response.json().result.isError).to.be.false);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Fetch DeFi portfolio (native + ERC-20 balances) for a wallet. Calls GET /api/portfolio on the gateway. Results are cached 120 s in Redis. Non-custodial: read-only via WDK.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 2,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_portfolio\",\n    \"arguments\": {\n      \"walletAddress\": \"{{wallet}}\",\n      \"chainId\": \"{{chain}}\"\n    }\n  }\n}"
+            },
+            "url": "{{mcpUrl}}/mcp"
+          }
+        },
+        {
+          "name": "MCP Tool – run_optimization",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const raw = pm.response.json().result.content[0].text;",
+            "const parsed = JSON.parse(raw);",
+            "pm.test('Has optimizationId', () => pm.expect(parsed).to.have.property('optimizationId'));",
+            "if (parsed.optimizationId) pm.collectionVariables.set('optimizationId', parsed.optimizationId);",
+            "console.log('optimizationId set:', parsed.optimizationId);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Start a yield optimization run. Calls POST /api/optimize on the gateway, which triggers gRPC to ai-core. ai-core queries the Neo4j knowledge graph and calls TRANSACT for VaR/moments enrichment. Returns optimizationId immediately — use get_optimization_plan to poll the result after ~3-5 s.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 3,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"run_optimization\",\n    \"arguments\": {\n      \"walletAddress\": \"{{wallet}}\",\n      \"riskTolerance\": \"medium\",\n      \"targetChains\": [\"ethereum\"],\n      \"maxGasCostUsd\": 20\n    }\n  }\n}"
+            },
+            "url": "{{mcpUrl}}/mcp"
+          }
+        },
+        {
+          "name": "MCP Tool – get_optimization_plan",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const raw = pm.response.json().result.content[0].text;",
+            "const parsed = JSON.parse(raw);",
+            "if (!parsed.error) {",
+            "  pm.test('Has actions', () => pm.expect(parsed).to.have.property('actions'));",
+            "} else {",
+            "  console.log('Plan not ready yet:', parsed.error);",
+            "}"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Fetch the cached optimization plan from Redis. Run 'run_optimization' first and ensure {{optimizationId}} is set. If the plan is not ready yet, wait 3-5 s and retry. Returns actions array with protocol, asset, chain, amount, expectedApy, riskScore and a summary with TRANSACT-enriched metrics.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 4,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_optimization_plan\",\n    \"arguments\": {\n      \"optimizationId\": \"{{optimizationId}}\"\n    }\n  }\n}"
+            },
+            "url": "{{mcpUrl}}/mcp"
+          }
+        },
+        {
+          "name": "MCP Tool – broadcast_signed_tx",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Broadcast an already-signed raw transaction hex. Non-custodial: the server never signs. User signs the tx in MetaMask/WDK and passes signedTxHex here. Gateway calls eth_sendRawTransaction on the specified chain. Replace signedTxHex with a real signed tx for live testing.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 5,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"broadcast_signed_tx\",\n    \"arguments\": {\n      \"signedTxHex\": \"{{signedTxHex}}\",\n      \"chainId\": \"{{chain}}\"\n    }\n  }\n}"
+            },
+            "url": "{{mcpUrl}}/mcp"
+          }
+        },
+        {
+          "name": "MCP Tool – quant_var (VaR + ES via TRANSACT)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('No error', () => pm.expect(pm.response.json().result.isError).to.be.false);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Compute portfolio VaR and Expected Shortfall via TRANSACT /risk/var. Required for quant-level DeFi risk assessment. returns: T×N matrix, weights: portfolio allocation, alpha: tail probability (0.05 = 95% confidence), portfolioValue: NAV in USD.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 6,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"quant_var\",\n    \"arguments\": {\n      \"returns\": [\n        [0.01, -0.02],\n        [-0.03, 0.01],\n        [0.02, 0.03],\n        [-0.01, -0.02],\n        [0.04, 0.01]\n      ],\n      \"weights\": [0.6, 0.4],\n      \"alpha\": 0.05,\n      \"portfolioValue\": 10000\n    }\n  }\n}"
+            },
+            "url": "{{mcpUrl}}/mcp"
+          }
+        },
+        {
+          "name": "MCP Tool – quant_moments (return, vol, skew, kurtosis via TRANSACT)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('No error', () => pm.expect(pm.response.json().result.isError).to.be.false);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Compute portfolio statistical moments via TRANSACT /portfolio/moments: annualised return, volatility, skewness (positive = right tail), excess kurtosis (positive = fat tails). High kurtosis is typical for DeFi — prefer HRP over MVO in this case.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 7,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"quant_moments\",\n    \"arguments\": {\n      \"returns\": [\n        [0.01, -0.02, 0.005],\n        [-0.03, 0.01, -0.01],\n        [0.02, 0.03, 0.008],\n        [-0.01, -0.02, 0.003],\n        [0.04, 0.01, 0.012]\n      ],\n      \"weights\": [0.5, 0.3, 0.2]\n    }\n  }\n}"
+            },
+            "url": "{{mcpUrl}}/mcp"
+          }
+        },
+        {
+          "name": "MCP Tool – explain_formula (Sharpe Ratio)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('No error', () => pm.expect(pm.response.json().result.isError).to.be.false);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "Get a natural-language explanation of a quant formula from the Neo4j knowledge graph (seeded from AlgorithmicTradingStrategies/ PDFs). Calls TRANSACT /agents/explain.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 8,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"explain_formula\",\n    \"arguments\": {\n      \"formulaName\": \"Sharpe Ratio\"\n    }\n  }\n}"
+            },
+            "url": "{{mcpUrl}}/mcp"
+          }
+        },
+        {
+          "name": "MCP Tool – explain_formula (HRP)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 9,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"explain_formula\",\n    \"arguments\": {\n      \"formulaName\": \"Hierarchical Risk Parity\"\n    }\n  }\n}"
+            },
+            "url": "{{mcpUrl}}/mcp"
+          }
+        },
+        {
+          "name": "MCP Tool – explain_formula (Kelly Criterion)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 10,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"explain_formula\",\n    \"arguments\": {\n      \"formulaName\": \"Kelly Criterion\"\n    }\n  }\n}"
+            },
+            "url": "{{mcpUrl}}/mcp"
+          }
+        },
+        {
+          "name": "MCP – Batch request (portfolio + var in one call)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Returns array of 2', () => pm.expect(pm.response.json()).to.be.an('array').with.lengthOf(2));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "description": "JSON-RPC 2.0 batch request. MCP server processes all requests concurrently and returns an array of responses.",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"jsonrpc\": \"2.0\",\n    \"id\": 1,\n    \"method\": \"tools/call\",\n    \"params\": {\n      \"name\": \"get_portfolio\",\n      \"arguments\": { \"walletAddress\": \"{{wallet}}\", \"chainId\": \"{{chain}}\" }\n    }\n  },\n  {\n    \"jsonrpc\": \"2.0\",\n    \"id\": 2,\n    \"method\": \"tools/call\",\n    \"params\": {\n      \"name\": \"quant_var\",\n      \"arguments\": {\n        \"returns\": [[0.01,-0.02],[-0.03,0.01],[0.02,0.03],[-0.01,-0.02],[0.04,0.01]],\n        \"weights\": [0.6, 0.4],\n        \"alpha\": 0.05,\n        \"portfolioValue\": 10000\n      }\n    }\n  }\n]"
+            },
+            "url": "{{mcpUrl}}/mcp"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "5 – End-to-End Flows",
+      "description": "Ordered sequences that simulate a full user/agent interaction. Run requests within each subfolder in order.",
+      "item": [
+        {
+          "name": "Flow A: Portfolio → Optimize → Plan (REST)",
+          "description": "1. Get portfolio | 2. Start optimization (auto-sets optimizationId) | 3. Wait ~4s | 4. Fetch plan",
+          "item": [
+            {
+              "name": "A1 – Get portfolio",
+              "request": {
+                "method": "GET",
+                "url": "{{gatewayUrl}}/api/portfolio?walletAddress={{wallet}}&chainId={{chain}}"
+              }
+            },
+            {
+              "name": "A2 – Start optimization",
+              "event": [{ "listen": "test", "script": { "exec": [
+                "const j = pm.response.json();",
+                "if (j.optimizationId) pm.collectionVariables.set('optimizationId', j.optimizationId);"
+              ], "type": "text/javascript" }}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\"walletAddress\":\"{{wallet}}\",\"constraints\":{\"riskTolerance\":\"medium\"}}" },
+                "url": "{{gatewayUrl}}/api/optimize"
+              }
+            },
+            {
+              "name": "A3 – Fetch plan (run after ~4s)",
+              "request": {
+                "method": "GET",
+                "url": "{{gatewayUrl}}/api/execute/plan/{{optimizationId}}"
+              }
+            },
+            {
+              "name": "A4 – VaR on proposed allocation",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\"returns\":[[0.01,-0.02],[-0.03,0.01],[0.02,0.03],[-0.01,-0.02],[0.04,0.01]],\"weights\":[0.6,0.4],\"alpha\":0.05,\"portfolio_value\":10000,\"horizon_days\":1,\"include_monte_carlo\":false,\"mc_simulations\":1000}" },
+                "url": "{{aiCoreUrl}}/risk/var"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Flow B: MCP Agent Flow (OpenClaw simulation)",
+          "description": "Simulate an OpenClaw agent conversation via direct MCP calls. 1. tools/list | 2. get_portfolio | 3. run_optimization | 4. get_optimization_plan | 5. quant_var | 6. explain_formula",
+          "item": [
+            {
+              "name": "B1 – Discover tools",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}" },
+                "url": "{{mcpUrl}}/mcp"
+              }
+            },
+            {
+              "name": "B2 – Get portfolio",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{\"name\":\"get_portfolio\",\"arguments\":{\"walletAddress\":\"{{wallet}}\",\"chainId\":\"{{chain}}\"}}}" },
+                "url": "{{mcpUrl}}/mcp"
+              }
+            },
+            {
+              "name": "B3 – Run optimization",
+              "event": [{ "listen": "test", "script": { "exec": [
+                "try {",
+                "  const raw = pm.response.json().result.content[0].text;",
+                "  const parsed = JSON.parse(raw);",
+                "  if (parsed.optimizationId) pm.collectionVariables.set('optimizationId', parsed.optimizationId);",
+                "} catch(e) {}"
+              ], "type": "text/javascript" }}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"run_optimization\",\"arguments\":{\"walletAddress\":\"{{wallet}}\",\"riskTolerance\":\"medium\",\"targetChains\":[\"ethereum\"]}}}" },
+                "url": "{{mcpUrl}}/mcp"
+              }
+            },
+            {
+              "name": "B4 – Get plan (run after ~4s)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/call\",\"params\":{\"name\":\"get_optimization_plan\",\"arguments\":{\"optimizationId\":\"{{optimizationId}}\"}}}" },
+                "url": "{{mcpUrl}}/mcp"
+              }
+            },
+            {
+              "name": "B5 – Compute VaR",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\",\"params\":{\"name\":\"quant_var\",\"arguments\":{\"returns\":[[0.01,-0.02],[-0.03,0.01],[0.02,0.03],[-0.01,-0.02],[0.04,0.01]],\"weights\":[0.6,0.4],\"alpha\":0.05,\"portfolioValue\":10000}}}" },
+                "url": "{{mcpUrl}}/mcp"
+              }
+            },
+            {
+              "name": "B6 – Explain HRP formula",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\"jsonrpc\":\"2.0\",\"id\":6,\"method\":\"tools/call\",\"params\":{\"name\":\"explain_formula\",\"arguments\":{\"formulaName\":\"Hierarchical Risk Parity\"}}}" },
+                "url": "{{mcpUrl}}/mcp"
+              }
+            }
+          ]
+        }
+      ]
+    }
+
+  ]
+}
