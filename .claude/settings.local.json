@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find C:UsersThinkPadDocumentsDoraHacks -name *.md -o -name *.txt)",
+      "Bash(grep \"\\\\.py$\")",
+      "Bash(find c:/Users/ThinkPad/Documents/DoraHacks -name *.md -not -path */node_modules/* -not -path */.git/*)",
+      "Bash(git checkout:*)"
+    ]
+  }
+}
