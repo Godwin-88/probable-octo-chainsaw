@@ -4,7 +4,32 @@
       "Bash(find C:UsersThinkPadDocumentsDoraHacks -name *.md -o -name *.txt)",
       "Bash(grep \"\\\\.py$\")",
       "Bash(find c:/Users/ThinkPad/Documents/DoraHacks -name *.md -not -path */node_modules/* -not -path */.git/*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(xargs -I {} basename \"{}\")",
+      "Bash(find C:UsersThinkPadDocumentsDoraHackspsychic-inventionknowledge_base -type f -name *M7*)",
+      "Bash(pdftotext \"INFORMATION AND DISTANCe.pdf\" -)",
+      "Bash(find 'C:/Users/ThinkPad/Documents/DoraHacks/psychic-invention/knowledge_base/M7 Information Theory and Graphs for Improved Portfolios' -type f -name *.pdf -exec pdftotext {} -)",
+      "Bash(2)",
+      "Bash(find 'C:\\\\Users\\\\ThinkPad\\\\Documents\\\\DoraHacks\\\\psychic-invention\\\\knowledge_base\\\\M7 Information Theory and Graphs for Improved Portfolios' -type f -name *.pdf)",
+      "Bash(grep -n \"clusterKMeans\\\\|clusterKMeansTop\\\\|clusterKMeansBase\\\\|Moen\" C:/Users/ThinkPad/Documents/DoraHacks/psychic-invention/knowledge_base/M7 Information Theory and Graphs for Improved Portfolios/*.txt)",
+      "Bash(ls \"C:\\\\Users\\\\ThinkPad\\\\Documents\\\\DoraHacks\\\\manim_animations\"\" | wc -l && ls \"C:UsersThinkPadDocumentsDoraHacksmanim_animations\"\")",
+      "Bash(ls /c/Users/ThinkPad/Documents/DoraHacks/manim_animations/ep2*.py /c/Users/ThinkPad/Documents/DoraHacks/manim_animations/ep3*.py)",
+      "Bash(grep -l VoiceoverScene /c/Users/ThinkPad/Documents/DoraHacks/manim_animations/ep2*.py /c/Users/ThinkPad/Documents/DoraHacks/manim_animations/ep3*.py)",
+      "Bash(grep -l \"VoiceoverScene\" /c/Users/ThinkPad/Documents/DoraHacks/manim_animations/ep*.py)",
+      "Bash(grep -l \"GTTSService\" /c/Users/ThinkPad/Documents/DoraHacks/manim_animations/ep*.py)",
+      "Bash(grep -n \"interpolate_color\" /c/Users/ThinkPad/Documents/DoraHacks/manim_animations/ep*.py)",
+      "Bash(grep -n \"squared\\\\|sigma-\\\\|w-one\\\\|w-two\\\\|equals.*sigma\\\\|times.*sigma\\\\|rho.*equals\\\\|lambda.*equals\\\\|beta.*equals\" /c/Users/ThinkPad/Documents/DoraHacks/manim_animations/ep*.py)",
+      "Bash(grep -v \"^.*voiceover.*$\")",
+      "Bash(manim -pql ep03_sharpe_sortino.py SharpeSortinoScene)",
+      "Bash(export PATH=\"$PATH:/c/Users/ThinkPad/AppData/Local/Programs/MiKTeX/miktex/bin/x64:/c/Program Files \\(x86\\)/sox-14-4-2\")",
+      "Bash(export PATH=\"/c/Users/ThinkPad/AppData/Local/Programs/MiKTeX/miktex/bin/x64:/c/Program Files \\(x86\\)/sox-14-4-2:/usr/bin:/bin:$PATH\")",
+      "Bash(manim -pql ep04_var.py VaRScene)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''manim_animations/ep09_momentum.py''\\).read\\(\\)\\); print\\(''Syntax OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''manim_animations/ep10_hrp.py''\\).read\\(\\)\\); print\\(''Syntax OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''manim_animations/ep10_hrp.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''Syntax OK''\\)\")",
+      "WebSearch",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''manim_animations/ep11_uniswap_amm.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''Syntax OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''manim_animations/ep12_impermanent_loss.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''Syntax OK''\\)\")"
     ]
   }
 }

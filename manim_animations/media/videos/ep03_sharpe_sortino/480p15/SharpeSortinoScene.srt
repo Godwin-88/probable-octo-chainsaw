@@ -1,0 +1,296 @@
+1
+00:00:00,000 --> 00:00:04,498
+The Sharpe Ratio is the single most cited performance metric
+
+2
+00:00:04,598 --> 00:00:09,404
+in finance. It's on every fund factsheet, every backtest report,
+
+3
+00:00:09,504 --> 00:00:13,543
+every quant resume. And it has a fundamental flaw that
+
+4
+00:00:13,643 --> 00:00:18,142
+can make a catastrophically risky strategy look like a safe,
+
+5
+00:00:18,242 --> 00:00:22,817
+consistent winner. Today I'll show you exactly what that flaw
+
+6
+00:00:22,917 --> 00:00:26,420
+is, and the fix that professionals use instead.
+
+7
+00:00:28,320 --> 00:00:34,418
+Welcome to QuantiFire. Both the Sharpe and Sortino ratios measure risk-adjusted
+
+8
+00:00:34,518 --> 00:00:38,733
+return — how much return are you generating per unit of
+
+9
+00:00:38,833 --> 00:00:43,284
+risk taken. But they disagree on what counts as risk. That
+
+10
+00:00:43,384 --> 00:00:49,796
+disagreement matters enormously when your return distribution is asymmetric — which
+
+11
+00:00:49,896 --> 00:00:53,876
+in DeFi and systematic trading, it almost always is.
+
+12
+00:00:55,476 --> 00:01:00,504
+The Sharpe Ratio: your average excess return above the risk-free
+
+13
+00:01:00,604 --> 00:01:05,312
+rate, divided by the standard deviation of all your returns.
+
+14
+00:01:05,409 --> 00:01:08,018
+The numerator — shown in teal — is
+
+15
+00:01:08,118 --> 00:01:11,525
+your excess return above the risk-free rate.
+
+16
+00:01:11,609 --> 00:01:16,451
+The denominator — shown in red — is the standard deviation of
+
+17
+00:01:16,551 --> 00:01:21,556
+ALL returns, up AND down. A month where you made eight percent?
+
+18
+00:01:21,656 --> 00:01:26,417
+That goes in. A month where you lost four percent? That also
+
+19
+00:01:26,517 --> 00:01:32,413
+goes in. The Sharpe treats both identically as volatility to be penalized.
+
+20
+00:01:33,476 --> 00:01:38,375
+Here is the flaw made concrete. Strategy A returns a flat
+
+21
+00:01:38,475 --> 00:01:43,288
+two percent every single month — no drama, no variation.
+
+22
+00:01:43,342 --> 00:01:48,575
+Strategy B averages the same two percent but with volatile swings:
+
+23
+00:01:48,675 --> 00:01:52,938
+some months of plus eight percent, some of minus four.
+
+24
+00:01:53,009 --> 00:01:58,957
+Both strategies have nearly identical Sharpe Ratios. But a rational investor
+
+25
+00:01:59,057 --> 00:02:03,971
+prefers Strategy B — those plus eight percent months are gains,
+
+26
+00:02:04,071 --> 00:02:08,269
+not risk. The Sharpe Ratio cannot tell the difference.
+
+27
+00:02:09,342 --> 00:02:14,746
+The Sortino Ratio fixes this. The denominator uses only downside
+
+28
+00:02:14,846 --> 00:02:19,992
+deviation — the standard deviation of returns that fall below
+
+29
+00:02:20,092 --> 00:02:24,722
+a target threshold, usually zero or the risk-free rate.
+
+30
+00:02:24,809 --> 00:02:30,387
+Returns above the threshold — shown in teal — are completely ignored
+
+31
+00:02:30,487 --> 00:02:35,146
+in the denominator. Returns below it — shown in red — are
+
+32
+00:02:35,246 --> 00:02:40,741
+the only ones penalized. You are penalized only for bad volatility.
+
+33
+00:02:40,809 --> 00:02:47,135
+Concretely: a strategy with fifteen percent upside deviation and five percent
+
+34
+00:02:47,235 --> 00:02:53,226
+downside deviation. Sharpe uses a combined sigma of about eleven percent.
+
+35
+00:02:53,326 --> 00:02:58,901
+Sortino uses only five. Same strategy — radically different scores —
+
+36
+00:02:59,001 --> 00:03:02,573
+and the Sortino tells the more honest story.
+
+37
+00:03:03,609 --> 00:03:08,387
+Use the Sharpe Ratio when return distributions are approximately
+
+38
+00:03:08,487 --> 00:03:13,646
+symmetric and normal — classical equity long-only, diversified factor
+
+39
+00:03:13,746 --> 00:03:18,677
+portfolios where upside and downside volatility are roughly equal.
+
+40
+00:03:18,742 --> 00:03:24,163
+Use the Sortino when strategies have skewed distributions — options
+
+41
+00:03:24,263 --> 00:03:29,437
+writing, trend following, yield farming — any strategy where you
+
+42
+00:03:29,537 --> 00:03:33,474
+care about the asymmetry between wins and losses.
+
+43
+00:03:33,542 --> 00:03:37,248
+And use the Calmar Ratio when you care specifically
+
+44
+00:03:37,348 --> 00:03:41,204
+about maximum drawdown — the preferred metric for CTA
+
+45
+00:03:41,304 --> 00:03:45,010
+traders who manage to explicit drawdown thresholds.
+
+46
+00:03:46,076 --> 00:03:51,404
+Now the most important warning. Some strategies manufacture high Sharpe
+
+47
+00:03:51,504 --> 00:03:56,603
+Ratios by selling tail risk — consistently collecting small premiums
+
+48
+00:03:56,703 --> 00:04:00,808
+from selling naked puts or short volatility strategies.
+
+49
+00:04:00,876 --> 00:04:04,960
+This produces a smooth return series right up until
+
+50
+00:04:05,060 --> 00:04:09,227
+a volatility spike wipes them out. Watch this equity
+
+51
+00:04:09,327 --> 00:04:13,904
+curve: beautiful, steady growth, Sharpe of two point one.
+
+52
+00:04:14,009 --> 00:04:17,659
+Then a sudden cliff. The Sharpe looked great the
+
+53
+00:04:17,759 --> 00:04:20,941
+whole time. This is the Sharpe Ratio trap.
+
+54
+00:04:21,009 --> 00:04:26,781
+Always pair Sharpe with tail metrics: maximum drawdown,
+
+55
+00:04:26,881 --> 00:04:32,333
+CVaR at ninety-five percent, skewness, and kurtosis.
+
+56
+00:04:33,409 --> 00:04:40,078
+For DeFi specifically: liquidity provision strategies have asymmetric profiles
+
+57
+00:04:40,178 --> 00:04:45,631
+— gradual impermanent loss accumulation punctuated by fee income
+
+58
+00:04:45,731 --> 00:04:50,925
+creates a right-skewed return distribution. Use Sortino here.
+
+59
+00:04:51,009 --> 00:04:57,267
+Funding rate arbitrage has near-normally distributed daily returns with rare
+
+60
+00:04:57,367 --> 00:05:02,789
+positive funding spike events. Sharpe works there, but always pair
+
+61
+00:05:02,889 --> 00:05:05,885
+it with CVaR to catch the spike risk.
+
+62
+00:05:06,942 --> 00:05:11,921
+Never evaluate a strategy with a single metric. If the Sortino
+
+63
+00:05:12,021 --> 00:05:17,738
+is significantly higher than the Sharpe, the strategy has positive skew
+
+64
+00:05:17,838 --> 00:05:21,506
+— a fat right tail — that's usually good news.
+
+65
+00:05:21,542 --> 00:05:24,451
+If they are roughly equal, the distribution
+
+66
+00:05:24,551 --> 00:05:27,250
+is near-symmetric and the metrics agree.
+
+67
+00:05:27,342 --> 00:05:33,016
+If the Sortino is lower than the Sharpe, the strategy has negative skew
+
+68
+00:05:33,116 --> 00:05:38,546
+— hidden tail risk lurking below the surface. That is your red flag.
+
+69
+00:05:38,609 --> 00:05:43,944
+Minimum reporting standard: Sharpe, Sortino, Max Drawdown,
+
+70
+00:05:44,044 --> 00:05:47,317
+and Skewness. Never just one number.
+
+71
+00:05:47,409 --> 00:05:50,748
+Next up: Value at Risk — how do quants put
+
+72
+00:05:50,848 --> 00:05:55,334
+an actual dollar figure on the worst-case loss? It's the
+
+73
+00:05:55,434 --> 00:06:00,984
+number regulators require, and it has some nasty surprises. Subscribe
+
+74
+00:06:01,084 --> 00:06:04,997
+and I'll see you in the next episode. QuantiFire.
+

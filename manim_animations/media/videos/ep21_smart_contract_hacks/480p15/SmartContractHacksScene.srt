@@ -1,0 +1,136 @@
+1
+00:00:00,000 --> 00:00:06,994
+The DAO hack: $60 million. Poly Network: $611 million. Ronin Bridge:
+
+2
+00:00:07,094 --> 00:00:14,401
+$625 million. Wormhole: $320 million. Total DeFi hacks since 2019: over
+
+3
+00:00:14,501 --> 00:00:21,599
+$5 billion stolen. Not from exchanges being hacked in the traditional
+
+4
+00:00:21,699 --> 00:00:27,650
+sense — from bugs in smart contract code that anyone could
+
+5
+00:00:27,750 --> 00:00:34,848
+exploit. Today I'm breaking down the five most common attack vectors,
+
+6
+00:00:34,948 --> 00:00:41,108
+the code-level vulnerability, and how each one is prevented.
+
+7
+00:00:41,266 --> 00:00:46,848
+Welcome to QuantiFire. Smart contracts are immutable programs running on
+
+8
+00:00:46,948 --> 00:00:51,582
+public blockchains. Their code is open source — any attacker
+
+9
+00:00:51,682 --> 00:00:56,238
+can study it. Any bug is a potential exploit. Understanding
+
+10
+00:00:56,338 --> 00:01:02,866
+these vulnerabilities is essential whether you're building protocols, auditing code,
+
+11
+00:01:02,966 --> 00:01:07,206
+or deciding which protocols to trust with your capital.
+
+12
+00:01:07,266 --> 00:01:13,607
+The five most damaging attack categories. Number one: reentrancy — the
+
+13
+00:01:13,707 --> 00:01:18,851
+original DeFi hack that drained The DAO of $60 million in
+
+14
+00:01:18,951 --> 00:01:24,831
+2016. Number two: access control failure — a single missing check
+
+15
+00:01:24,931 --> 00:01:31,916
+enabled the $611 million Poly Network hack. Number three: oracle manipulation
+
+16
+00:01:32,016 --> 00:01:38,264
+— flash loans used to distort prices across multiple attacks totaling
+
+17
+00:01:38,364 --> 00:01:44,337
+$500 million or more. Number four: logic and economic design flaws
+
+18
+00:01:44,437 --> 00:01:50,409
+— Mango Markets lost $116 million to a price manipulation strategy
+
+19
+00:01:50,509 --> 00:01:56,574
+that wasn't technically a code bug. Number five: integer overflow —
+
+20
+00:01:56,674 --> 00:02:01,358
+affects older contracts written before Solidity 0.8.
+
+21
+00:02:04,400 --> 00:02:10,583
+The reentrancy pattern: the attacker calls withdraw on the victim contract.
+
+22
+00:02:10,683 --> 00:02:16,531
+The victim sends ETH to the attacker's contract. The attacker's receive
+
+23
+00:02:16,631 --> 00:02:22,227
+function calls withdraw again — before the first call completes. The
+
+24
+00:02:22,327 --> 00:02:27,338
+victim hasn't updated its balance yet, so it sends ETH again.
+
+25
+00:02:27,438 --> 00:02:34,542
+Repeat until the pool is drained. The fix: Checks-Effects-Interactions pattern. Update
+
+26
+00:02:34,642 --> 00:02:38,983
+all state — set balance to zero — before any external
+
+27
+00:02:39,083 --> 00:02:44,596
+call. Or use a nonReentrant mutex lock. Modern best practice: both.
+
+28
+00:02:44,666 --> 00:02:49,730
+Before trusting a protocol with capital: has it been audited by
+
+29
+00:02:49,830 --> 00:02:54,566
+at least two top-tier firms? Is there a bug bounty program?
+
+30
+00:02:54,666 --> 00:03:00,304
+Is the code open source and time-tested? What's the largest withdrawal
+
+31
+00:03:00,404 --> 00:03:05,714
+that can happen without a time-lock? These four questions are your
+
+32
+00:03:05,814 --> 00:03:11,697
+minimum security due diligence. Next: Governance Attacks — when DAOs turn
+
+33
+00:03:11,797 --> 00:03:17,763
+against their users. Flash loan voting, token concentration risks, and the
+
+34
+00:03:17,863 --> 00:03:24,238
+malicious proposal that drained a $100 million treasury. Subscribe. QuantiFire.
+

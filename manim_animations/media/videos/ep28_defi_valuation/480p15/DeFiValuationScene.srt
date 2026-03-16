@@ -1,0 +1,156 @@
+1
+00:00:00,000 --> 00:00:05,836
+The narrative that crypto is purely speculative — with no fundamental
+
+2
+00:00:05,936 --> 00:00:11,773
+value anchor — is wrong. Every DeFi protocol generates revenue. Every
+
+3
+00:00:11,873 --> 00:00:17,021
+one has costs. Many have discounted cash flows you can model.
+
+4
+00:00:17,121 --> 00:00:22,527
+The same valuation frameworks that work for stocks work for DeFi
+
+5
+00:00:22,627 --> 00:00:27,861
+protocols if you know how to translate the metrics. Today I'll
+
+6
+00:00:27,961 --> 00:00:32,852
+show you the DeFi-native equivalents of P/E, P/B, and DCF.
+
+7
+00:00:33,000 --> 00:00:39,803
+Welcome to QuantiFire. Quantitative value investing — buying assets below fundamental
+
+8
+00:00:39,903 --> 00:00:44,189
+value and waiting for reversion — is one of the oldest
+
+9
+00:00:44,289 --> 00:00:50,687
+and most empirically robust investment strategies. The HML factor in Fama-French
+
+10
+00:00:50,787 --> 00:00:56,778
+is essentially systematic value. The question is: what is fundamental value
+
+11
+00:00:56,878 --> 00:01:00,596
+for a DeFi protocol? Let's build the framework.
+
+12
+00:01:00,666 --> 00:01:06,944
+Every DeFi protocol has revenue from trading fees, lending spread, and
+
+13
+00:01:07,044 --> 00:01:13,230
+liquidation fees. It has costs from token emissions and security. The
+
+14
+00:01:13,330 --> 00:01:22,341
+TradFi-to-DeFi metric translation: Price-to-Earnings maps to fully diluted valuation over annualized
+
+15
+00:01:22,441 --> 00:01:28,081
+revenue — that's your P/S ratio. Price-to-Book maps to FDV over
+
+16
+00:01:28,181 --> 00:01:33,092
+TVL — total value locked is the DeFi equivalent of book
+
+17
+00:01:33,192 --> 00:01:38,832
+value. Earnings yield maps to revenue over FDV. And growth maps
+
+18
+00:01:38,932 --> 00:01:44,754
+to TVL and revenue growth rates. Key data sources: Token Terminal
+
+19
+00:01:44,854 --> 00:01:50,676
+for revenue and P/S ratios, DeFiLlama for TVL, Dune Analytics for
+
+20
+00:01:50,776 --> 00:01:52,862
+custom on-chain queries.
+
+21
+00:01:57,933 --> 00:02:03,197
+This scatter plot maps DeFi protocols by FDV over TVL on
+
+22
+00:02:03,297 --> 00:02:10,286
+the horizontal axis against annualized revenue yield on the vertical axis.
+
+23
+00:02:10,386 --> 00:02:15,842
+The value zone — FDV/TVL below 0.8 and revenue yield above
+
+24
+00:02:15,942 --> 00:02:21,972
+30% — contains Uniswap, Curve, and Aave. These are the protocols
+
+25
+00:02:22,072 --> 00:02:29,827
+generating substantial real revenue relative to their managed assets at reasonable
+
+26
+00:02:29,927 --> 00:02:36,437
+valuations. Protocol X at top-right — high FDV/TVL, low revenue yield
+
+27
+00:02:36,537 --> 00:02:43,813
+— represents a speculative premium with no fundamental support. The screening
+
+28
+00:02:43,913 --> 00:02:50,423
+criteria: P/S below 10, revenue yield above 10%, and positive revenue
+
+29
+00:02:50,523 --> 00:02:56,266
+growth. Combine with momentum from episode 25 to get value at
+
+30
+00:02:56,366 --> 00:03:03,642
+improving momentum — the strongest systematic signal combination in any asset
+
+31
+00:03:03,742 --> 00:03:04,217
+class.
+
+32
+00:03:05,466 --> 00:03:12,493
+DeFi protocols have real fundamentals: revenue, growth, token cash flow. Build
+
+33
+00:03:12,593 --> 00:03:18,066
+a screening model using P/S below 10 plus revenue yield above
+
+34
+00:03:18,166 --> 00:03:24,096
+10% plus positive revenue growth as the value filter. Combine with
+
+35
+00:03:24,196 --> 00:03:30,492
+momentum to get value at improving momentum — the strongest systematic
+
+36
+00:03:30,592 --> 00:03:36,431
+signal combination in any asset class. Final episode of Series 4:
+
+37
+00:03:36,531 --> 00:03:42,918
+On-Chain Alpha Signals — the DeFi data revolution. Wallet tracking, TVL
+
+38
+00:03:43,018 --> 00:03:49,679
+flows, liquidity migration signals, and how to build a systematic on-chain
+
+39
+00:03:49,779 --> 00:03:52,694
+data edge. Subscribe. QuantiFire.
+

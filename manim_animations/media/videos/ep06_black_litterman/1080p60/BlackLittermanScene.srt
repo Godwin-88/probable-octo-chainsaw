@@ -1,0 +1,296 @@
+1
+00:00:02,000 --> 00:00:07,302
+If you've ever run a mean-variance optimizer and gotten portfolio
+
+2
+00:00:07,402 --> 00:00:11,458
+weights like 120% in one asset and negative 80% in
+
+3
+00:00:11,558 --> 00:00:17,692
+another, you've experienced the input sensitivity problem of classical MVO.
+
+4
+00:00:17,783 --> 00:00:21,879
+In 1990, Goldman Sachs researchers Fischer Black and
+
+5
+00:00:21,979 --> 00:00:25,914
+Robert Litterman published the fix. It changed how
+
+6
+00:00:26,014 --> 00:00:30,595
+institutional portfolio managers build portfolios forever.
+
+7
+00:00:33,183 --> 00:00:36,640
+Black-Litterman combines a Bayesian prior — the
+
+8
+00:00:36,740 --> 00:00:39,971
+market equilibrium — with your active views.
+
+9
+00:00:40,066 --> 00:00:45,889
+Using matrix algebra, it produces stable, intuitive portfolio weights.
+
+10
+00:00:45,989 --> 00:00:49,866
+The genius is in the starting point: instead of
+
+11
+00:00:49,966 --> 00:00:54,942
+guessing expected returns — which causes all the instability
+
+12
+00:00:55,042 --> 00:00:59,934
+— you reverse-engineer what the market is already implying.
+
+13
+00:01:02,533 --> 00:01:08,086
+Start with market-cap weights. The market equilibrium implies these weights
+
+14
+00:01:08,186 --> 00:01:12,609
+are optimal for some aggregate level of risk aversion delta.
+
+15
+00:01:12,700 --> 00:01:17,975
+Reverse-engineer the implied expected returns: pi equals delta times
+
+16
+00:01:18,075 --> 00:01:22,481
+the covariance matrix times the market-cap weights. Pi is
+
+17
+00:01:22,581 --> 00:01:26,276
+your prior — the market's best guess of expected
+
+18
+00:01:26,376 --> 00:01:31,256
+returns, reflected in current prices. It's the neutral starting
+
+19
+00:01:31,356 --> 00:01:34,656
+point before you add any views of your own.
+
+20
+00:01:37,250 --> 00:01:41,489
+Suppose you have K views. Each view is expressed
+
+21
+00:01:41,589 --> 00:01:45,286
+as P times mu equals q plus epsilon-views.
+
+22
+00:01:45,383 --> 00:01:50,261
+P is a K by N pick matrix describing which assets your view
+
+23
+00:01:50,361 --> 00:01:56,504
+is about. Q is the vector of view returns. Omega captures your uncertainty
+
+24
+00:01:56,604 --> 00:02:01,651
+in each view — the smaller omega, the more confident you are.
+
+25
+00:02:01,750 --> 00:02:07,691
+Concrete example: you believe US Tech will outperform EU Banks
+
+26
+00:02:07,791 --> 00:02:12,174
+by 3% annually. P has plus-one for US Tech and
+
+27
+00:02:12,274 --> 00:02:18,021
+minus-one for EU Banks. Q equals 0.03. Omega-one-one is your
+
+28
+00:02:18,121 --> 00:02:24,258
+uncertainty squared — your confidence in this specific forecast.
+
+29
+00:02:26,850 --> 00:02:30,638
+Combine the prior and views using Bayes' theorem. The
+
+30
+00:02:30,738 --> 00:02:35,700
+Black-Litterman posterior mean is this formula — a precision-weighted
+
+31
+00:02:35,800 --> 00:02:38,342
+average of the prior and your views.
+
+32
+00:02:38,950 --> 00:02:43,751
+Tau is a scalar expressing how uncertain you are
+
+33
+00:02:43,851 --> 00:02:49,266
+about the prior. Typically set between 0.025 and 0.05.
+
+34
+00:02:49,350 --> 00:02:52,877
+High confidence views — small omega — pull the
+
+35
+00:02:52,977 --> 00:02:58,239
+posterior strongly toward your forecast. Low confidence views barely
+
+36
+00:02:58,339 --> 00:03:02,498
+move it from equilibrium. This is exactly the Bayesian
+
+37
+00:03:02,598 --> 00:03:05,810
+behaviour you want from a portfolio model.
+
+38
+00:03:10,400 --> 00:03:15,096
+Plug the BL posterior into the standard mean-variance optimizer.
+
+39
+00:03:15,196 --> 00:03:18,468
+Here in blue are the market-cap weights — the
+
+40
+00:03:18,568 --> 00:03:21,916
+neutral starting point when you have no views.
+
+41
+00:03:22,000 --> 00:03:26,632
+In teal are the BL weights after expressing the view that
+
+42
+00:03:26,732 --> 00:03:32,527
+US equities will outperform. The optimizer tilts toward US equities and
+
+43
+00:03:32,627 --> 00:03:37,259
+away from EU — in exact proportion to your confidence. No
+
+44
+00:03:37,359 --> 00:03:42,324
+extreme positions. No corner solutions from estimation noise.
+
+45
+00:03:42,416 --> 00:03:47,588
+The practical result: BL portfolios look like real portfolios
+
+46
+00:03:47,688 --> 00:03:52,515
+— diversified, intuitive, tilted in the direction of your
+
+47
+00:03:52,615 --> 00:03:57,700
+convictions rather than dominated by optimization artifacts.
+
+48
+00:04:00,300 --> 00:04:06,635
+Common abuse one: setting tau incorrectly. Many practitioners default tau to
+
+49
+00:04:06,735 --> 00:04:11,886
+1, which makes the prior too uncertain and lets views dominate
+
+50
+00:04:11,986 --> 00:04:16,544
+— reintroducing the instability BL was designed to fix.
+
+51
+00:04:16,633 --> 00:04:21,820
+Common abuse two: treating omega as diagonal. This assumes view
+
+52
+00:04:21,920 --> 00:04:27,024
+errors are uncorrelated — fine if views are truly independent,
+
+53
+00:04:27,124 --> 00:04:30,885
+but wrong if they share a common macro driver.
+
+54
+00:04:30,983 --> 00:04:37,165
+Common abuse three: using only absolute views. Absolute views are harder to
+
+55
+00:04:37,265 --> 00:04:43,028
+calibrate and more sensitive to error. Prefer relative views — asset A
+
+56
+00:04:43,128 --> 00:04:47,803
+beats B by X percent — which are more natural and stable.
+
+57
+00:04:50,400 --> 00:04:55,496
+BL maps directly to DeFi yield optimization. The equilibrium
+
+58
+00:04:55,596 --> 00:05:00,260
+prior is the current yield allocation across protocols.
+
+59
+00:05:00,350 --> 00:05:08,148
+Your views are protocol-specific forecasts. For example: Aave's utilization
+
+60
+00:05:08,248 --> 00:05:13,202
+will increase by 15%, boosting supply APY by 2%.
+
+61
+00:05:13,302 --> 00:05:17,941
+Or: Curve's CRV incentives will be cut in the
+
+62
+00:05:18,041 --> 00:05:22,786
+next governance vote, reducing pool APY by 3%.
+
+63
+00:05:22,883 --> 00:05:27,052
+These views are expressed in the P matrix, and BL blends
+
+64
+00:05:27,152 --> 00:05:33,228
+them with the equilibrium yield allocation to produce stable reallocation weights
+
+65
+00:05:33,328 --> 00:05:37,879
+— without the extreme positions classical MVO would generate.
+
+66
+00:05:39,466 --> 00:05:44,694
+The key insight of BL: start from the market, not from guesses.
+
+67
+00:05:44,783 --> 00:05:48,975
+When you have no view, hold the market. When you have a
+
+68
+00:05:49,075 --> 00:05:55,373
+view, tilt proportionally to your confidence. When you have strong conviction, set
+
+69
+00:05:55,473 --> 00:05:59,275
+a small omega and let the view move the posterior.
+
+70
+00:05:59,366 --> 00:06:03,206
+The formula ensures your views are incorporated in a
+
+71
+00:06:03,306 --> 00:06:08,434
+mathematically coherent way that classical MVO simply cannot achieve.
+
+72
+00:06:09,033 --> 00:06:14,603
+Next: the Kelly Criterion — the mathematically optimal bet sizing
+
+73
+00:06:14,703 --> 00:06:20,011
+formula, why it's dangerous to use naively, and the fractional
+
+74
+00:06:20,111 --> 00:06:26,117
+Kelly compromise professionals use in practice. Subscribe. QuantiFire.
+

@@ -1,0 +1,308 @@
+1
+00:00:00,000 --> 00:00:04,667
+In 1956, a Bell Labs scientist named John Kelly published a
+
+2
+00:00:04,767 --> 00:00:10,405
+formula that — if applied correctly — provably maximises your long-term
+
+3
+00:00:10,505 --> 00:00:15,092
+wealth growth rate faster than any other betting strategy.
+
+4
+00:00:15,183 --> 00:00:19,346
+It's used by everyone from professional blackjack card counters
+
+5
+00:00:19,446 --> 00:00:22,595
+to quantitative hedge funds. And it comes with a
+
+6
+00:00:22,695 --> 00:00:25,979
+trap that destroys accounts if you're not careful.
+
+7
+00:00:28,566 --> 00:00:33,174
+The Kelly Criterion answers one question: given a bet with known
+
+8
+00:00:33,274 --> 00:00:38,618
+probabilities and payoffs, what fraction of your bankroll should you risk?
+
+9
+00:00:38,716 --> 00:00:42,192
+The answer is counterintuitive — not as much as
+
+10
+00:00:42,292 --> 00:00:45,691
+you think, and definitely not all of it. Today
+
+11
+00:00:45,791 --> 00:00:50,560
+I'll give you the single-bet formula, the multi-asset extension,
+
+12
+00:00:50,660 --> 00:00:54,744
+and the fractional Kelly approach used in real trading.
+
+13
+00:00:57,333 --> 00:01:02,489
+The Kelly formula: f-star equals p minus q over b.
+
+14
+00:01:02,600 --> 00:01:08,985
+p is the probability of winning. q equals one minus p — the probability
+
+15
+00:01:09,085 --> 00:01:14,740
+of losing. b is the net odds: how much you win per unit risked.
+
+16
+00:01:14,833 --> 00:01:18,756
+f-star is the optimal fraction of your bankroll to
+
+17
+00:01:18,856 --> 00:01:23,021
+bet each time. This single formula encodes the entire
+
+18
+00:01:23,121 --> 00:01:27,045
+trade-off between edge, odds, and position sizing.
+
+19
+00:01:29,633 --> 00:01:35,771
+Concrete example: a fair coin where heads pays 2 to
+
+20
+00:01:35,871 --> 00:01:40,909
+1. p equals 0.5, q equals 0.5, b equals 2.
+
+21
+00:01:41,000 --> 00:01:45,292
+Kelly says bet 25% of your bankroll each flip.
+
+22
+00:01:45,383 --> 00:01:51,676
+Not 50% — that feels right but a losing streak compounds ruinously.
+
+23
+00:01:51,776 --> 00:01:57,687
+Not 100% — one loss wipes you out. 25%, because the mathematics
+
+24
+00:01:57,787 --> 00:02:04,843
+proves that is the exact fraction that maximises compound wealth over time.
+
+25
+00:02:07,433 --> 00:02:13,010
+Kelly maximises the geometric mean — the expected value of the
+
+26
+00:02:13,110 --> 00:02:17,497
+logarithm of wealth. G of f equals p times log of
+
+27
+00:02:17,597 --> 00:02:21,709
+one plus f-b, plus q times log of one minus f.
+
+28
+00:02:22,800 --> 00:02:27,557
+Maximise G over f. The solution is f-star at 25%.
+
+29
+00:02:27,657 --> 00:02:32,117
+Notice: G rises to a peak at Kelly, then falls
+
+30
+00:02:32,217 --> 00:02:38,660
+steeply. Betting more than f-star produces lower geometric growth.
+
+31
+00:02:38,750 --> 00:02:43,624
+Paradoxically, overbetting makes you grow slower and eventually go
+
+32
+00:02:43,724 --> 00:02:46,789
+to zero. This is the Kelly trap: a winning
+
+33
+00:02:46,889 --> 00:02:51,010
+strategy played at twice Kelly will eventually ruin you.
+
+34
+00:02:54,600 --> 00:03:00,500
+At 10% — well below Kelly — the bankroll grows slowly but safely.
+
+35
+00:03:00,600 --> 00:03:03,611
+At full Kelly — 25% — the bankroll
+
+36
+00:03:03,711 --> 00:03:07,820
+compounds at the maximum long-run growth rate.
+
+37
+00:03:07,916 --> 00:03:12,168
+At 50% — twice Kelly — growth is actually slower
+
+38
+00:03:12,268 --> 00:03:16,792
+than full Kelly. The extra risk is not compensated.
+
+39
+00:03:16,883 --> 00:03:23,317
+At 75% — reckless overbetting — the bankroll collapses toward
+
+40
+00:03:23,417 --> 00:03:28,351
+zero. A strategy with a 50% win rate, played at
+
+41
+00:03:28,451 --> 00:03:34,135
+75%, will eventually ruin you. This is the Kelly trap.
+
+42
+00:03:38,033 --> 00:03:42,960
+For a portfolio of N assets, the multi-asset Kelly maximises
+
+43
+00:03:43,060 --> 00:03:47,149
+the expected log return over all weight vectors w.
+
+44
+00:03:47,250 --> 00:03:52,100
+In the Gaussian approximation, the optimal Kelly portfolio is
+
+45
+00:03:52,200 --> 00:03:57,619
+proportional to the inverse covariance matrix times expected returns
+
+46
+00:03:57,719 --> 00:04:02,326
+— identical to the Markowitz tangency portfolio. Kelly and
+
+47
+00:04:02,426 --> 00:04:05,654
+Markowitz converge in the Gaussian world.
+
+48
+00:04:05,750 --> 00:04:10,111
+Where they diverge is in fat-tailed distributions, where
+
+49
+00:04:10,211 --> 00:04:14,572
+Kelly is more conservative because log utility penalises
+
+50
+00:04:14,672 --> 00:04:19,114
+extreme losses far more severely than mean-variance does.
+
+51
+00:04:21,700 --> 00:04:26,764
+Full Kelly is extremely aggressive and highly sensitive to estimation
+
+52
+00:04:26,864 --> 00:04:30,132
+errors in p and b. A 10% overestimate of edge
+
+53
+00:04:30,232 --> 00:04:33,576
+can drive you to bet twice the optimal amount.
+
+54
+00:04:33,666 --> 00:04:38,784
+In practice, traders use fractional Kelly. Half Kelly gives you
+
+55
+00:04:38,884 --> 00:04:43,008
+about 75% of the long-run growth rate of full Kelly
+
+56
+00:04:43,108 --> 00:04:47,894
+with dramatically lower drawdowns and variance of outcomes.
+
+57
+00:04:47,983 --> 00:04:53,584
+Half-Kelly is the professional compromise between growth maximisation and
+
+58
+00:04:53,684 --> 00:04:57,099
+risk control. Never use more than full Kelly.
+
+59
+00:04:59,683 --> 00:05:04,544
+Applied to yield strategy selection: the Kelly fraction for
+
+60
+00:05:04,644 --> 00:05:09,927
+each protocol allocation is proportional to expected yield minus
+
+61
+00:05:10,027 --> 00:05:14,216
+the risk-free rate, divided by the variance of that
+
+62
+00:05:14,316 --> 00:05:20,607
+yield. Higher-yielding, lower-variance protocols receive larger allocations.
+
+63
+00:05:20,700 --> 00:05:26,164
+Smart contract exploit risk dramatically reduces the Kelly fraction.
+
+64
+00:05:26,264 --> 00:05:29,601
+A negative 100% event has a log utility of
+
+65
+00:05:29,701 --> 00:05:34,511
+negative infinity — total ruin. The Kelly fraction collapses
+
+66
+00:05:34,611 --> 00:05:39,176
+to near-zero for any protocol with uncapped exploit risk.
+
+67
+00:05:39,266 --> 00:05:43,407
+This is why you must explicitly price smart contract
+
+68
+00:05:43,507 --> 00:05:47,974
+risk before applying Kelly to any DeFi yield allocation.
+
+69
+00:05:49,566 --> 00:05:53,766
+Kelly is the long-run optimal sizing formula — but only
+
+70
+00:05:53,866 --> 00:05:59,474
+when your probability estimates are accurate. Use half-Kelly in practice.
+
+71
+00:05:59,566 --> 00:06:05,954
+Never use more than full Kelly — overbetting causes ruin even with positive
+
+72
+00:06:06,054 --> 00:06:11,490
+edge. Always add a hard stop: Kelly is a ceiling, not a mandate.
+
+73
+00:06:11,583 --> 00:06:16,933
+For DeFi: price smart contract exploit risk before applying
+
+74
+00:06:17,033 --> 00:06:21,275
+Kelly. The formula is a ceiling, not a mandate.
+
+75
+00:06:21,866 --> 00:06:27,890
+Next: Risk Parity — the portfolio construction method that ignores
+
+76
+00:06:27,990 --> 00:06:34,757
+expected returns entirely and allocates purely based on risk contribution.
+
+77
+00:06:34,857 --> 00:06:40,510
+Used by Bridgewater's All Weather fund. Subscribe. QuantiFire.
+

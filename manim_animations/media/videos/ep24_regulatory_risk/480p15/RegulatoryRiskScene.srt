@@ -1,0 +1,192 @@
+1
+00:00:00,000 --> 00:00:04,977
+In June 2023, the SEC sued Binance and Coinbase in the same
+
+2
+00:00:05,077 --> 00:00:11,690
+week, calling dozens of tokens unregistered securities. In 2024, the EU's MiCA
+
+3
+00:00:11,790 --> 00:00:18,746
+regulation went fully live — the most comprehensive crypto regulatory framework in
+
+4
+00:00:18,846 --> 00:00:24,512
+history. The regulatory tide is rising. Ignoring it is no longer an
+
+5
+00:00:24,612 --> 00:00:31,053
+option for anyone operating in DeFi. Today I'll map the regulatory landscape
+
+6
+00:00:31,153 --> 00:00:35,012
+and what it actually means for your positions.
+
+7
+00:00:35,133 --> 00:00:39,806
+Welcome to QuantiFire. Regulatory risk is the risk that legal
+
+8
+00:00:39,906 --> 00:00:44,502
+or regulatory changes reduce the value of or restrict access
+
+9
+00:00:44,602 --> 00:00:49,197
+to your crypto assets or DeFi positions. It's different from
+
+10
+00:00:49,297 --> 00:00:54,284
+market risk — it can materialize regardless of market conditions,
+
+11
+00:00:54,384 --> 00:00:59,292
+and it can move fast. Understanding the current global framework
+
+12
+00:00:59,392 --> 00:01:02,657
+is essential for every serious participant.
+
+13
+00:01:02,733 --> 00:01:08,111
+The global picture: the United States has the most uncertainty —
+
+14
+00:01:08,211 --> 00:01:13,419
+the SEC and CFTC are battling over jurisdiction, and the Howey
+
+15
+00:01:13,519 --> 00:01:19,496
+Test is applied inconsistently. The European Union has MiCA, which went
+
+16
+00:01:19,596 --> 00:01:24,632
+live in December 2024 — clear rules, a licensing regime, and
+
+17
+00:01:24,732 --> 00:01:31,224
+crucially a carve-out for fully decentralized protocols. The UK is developing
+
+18
+00:01:31,324 --> 00:01:38,157
+its own FCA-led framework. Singapore has been consistently crypto-friendly with a
+
+19
+00:01:38,257 --> 00:01:44,920
+clear MAS licensing path. Jurisdiction matters for which protocols and products
+
+20
+00:01:45,020 --> 00:01:46,889
+you can legally access.
+
+21
+00:01:49,933 --> 00:01:54,450
+The SEC applies the Howey Test to determine if a token
+
+22
+00:01:54,550 --> 00:01:59,751
+is a security. Four criteria: investment of money, in a common
+
+23
+00:01:59,851 --> 00:02:05,907
+enterprise, with expectation of profit, from the efforts of others. Most
+
+24
+00:02:06,007 --> 00:02:11,977
+governance tokens fail this test — they represent expectation of profit
+
+25
+00:02:12,077 --> 00:02:18,133
+from the protocol team's efforts. If classified as securities, the token
+
+26
+00:02:18,233 --> 00:02:23,092
+must register with the SEC, can only be sold to accredited
+
+27
+00:02:23,192 --> 00:02:30,360
+investors, and exchanges must be licensed broker-dealers. Uniswap, Aave, and Compound
+
+28
+00:02:30,460 --> 00:02:36,345
+governance tokens are all under implicit SEC scrutiny. Bitcoin and ETH
+
+29
+00:02:36,445 --> 00:02:41,389
+are generally treated as commodities by the CFTC — but most
+
+30
+00:02:41,489 --> 00:02:44,553
+altcoins remain in a legal grey zone.
+
+31
+00:02:48,600 --> 00:02:54,105
+MiCA creates clear rules for centralized crypto companies — actually
+
+32
+00:02:54,205 --> 00:02:59,958
+a positive for institutions who need regulatory clarity before entering
+
+33
+00:03:00,058 --> 00:03:05,729
+the market. Key provisions: crypto asset service providers — exchanges
+
+34
+00:03:05,829 --> 00:03:10,098
+and custodians — must be licensed with strict KYC and
+
+35
+00:03:10,198 --> 00:03:16,034
+AML requirements. Stablecoins like USDC require EU banking licenses. The
+
+36
+00:03:16,134 --> 00:03:22,052
+critical carve-out: protocols that are fully decentralized with no single
+
+37
+00:03:22,152 --> 00:03:27,822
+controlling entity are explicitly excluded from MiCA. This means truly
+
+38
+00:03:27,922 --> 00:03:33,840
+decentralized protocols like Uniswap are not directly regulated. NFTs are
+
+39
+00:03:33,940 --> 00:03:40,270
+not covered unless they function as financial instruments. Regulatory clarity,
+
+40
+00:03:40,370 --> 00:03:45,876
+even if initially burdensome, tends to be positive for institutional
+
+41
+00:03:45,976 --> 00:03:48,020
+adoption and market depth.
+
+42
+00:03:49,066 --> 00:03:54,430
+Regulatory risk is not binary. It's a continuous exposure that
+
+43
+00:03:54,530 --> 00:04:01,217
+can be partially hedged: diversify across jurisdictions, avoid protocols with
+
+44
+00:04:01,317 --> 00:04:09,060
+clearly centralized control structures, hold stablecoin exposure across multiple issuers,
+
+45
+00:04:09,160 --> 00:04:15,230
+and stay current on regulatory developments in your jurisdiction. That
+
+46
+00:04:15,330 --> 00:04:20,782
+wraps Series 3. Series 4 next: bridging TradFi quant strategies
+
+47
+00:04:20,882 --> 00:04:26,775
+into DeFi — how momentum, statistical arbitrage, and value investing
+
+48
+00:04:26,875 --> 00:04:31,446
+translate to on-chain markets. Subscribe. QuantiFire.
+
