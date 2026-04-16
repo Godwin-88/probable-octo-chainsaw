@@ -16,6 +16,7 @@ credentials/
 # Content and reference dirs (local/proprietary; do not push)
 AlgorithmicTradingStrategies/
 rulesreferences/
+agentic-trading-systems
 
 # --- Node ---
 node_modules/

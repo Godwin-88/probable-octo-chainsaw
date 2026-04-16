@@ -159,7 +159,7 @@ SET ks.title = 'How to Make Money in Stocks',
     ks.isbn = '978-0-07-163248-9',
     ks.category = 'technical_analysis',
     ks.domain = 'quant_finance',
-    ks.filename = 'How+To+Make+Money+In+Stocks+-+William+J.+O''Neil.pdf',
+    ks.filename = 'How+To+Make+Money+In+Stocks+-+William+J.+O\'Neil.pdf',
     ks.folder = 'AlgorithmicTradingStrategies',
     ks.key_topics = 'CANSLIM;growth investing;chart patterns;breakout;volume;earnings momentum';
 

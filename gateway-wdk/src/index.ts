@@ -10,6 +10,7 @@ import { authRouter } from "./routes/auth.js";
 import { agentRouter } from "./routes/agent.js";
 import { transactProxyRouter } from "./routes/transactProxy.js";
 import { v2Router } from "./routes/v2.js";
+import { krakenRouter } from "./routes/kraken.js";
 import { getRedis } from "./lib/redis.js";
 import { registerV2WebSockets, tryUpgradeV2 } from "./ws/v2.js";
 
@@ -35,6 +36,8 @@ app.use("/api/auth", authRouter);
 app.use("/api/agent", agentRouter);
 // Proxy quant/TRANSACT REST to unified Python gateway (ai-core:8000)
 app.use("/api/transact", transactProxyRouter);
+// Kraken CLI trading integration
+app.use("/api/kraken", krakenRouter);
 // Web3-native v2 API (positions, oracles, simulate, execute, agent)
 app.use("/v2", v2Router);
 

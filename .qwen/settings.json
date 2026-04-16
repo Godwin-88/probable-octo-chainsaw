@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker compose ps)",
+      "Bash(kraken *)",
+      "Bash(test *)",
+      "Bash(source *)",
+      "Bash(sleep *)",
+      "Bash(timeout *)",
+      "Bash(docker images)",
+      "Bash(docker logs *)",
+      "Bash(mkdir *)"
+    ]
+  },
+  "$version": 3
+}
