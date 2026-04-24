@@ -200,6 +200,12 @@ class FFTOptimizedRequest(BaseModel):
     r: float  # Risk-free rate
     sigma: float  # Volatility
 
+class MarginRequest(BaseModel):
+    price_usdc: float = 0.005
+    compute_cost: float = 0.002
+    arc_gas: float = 0.0001
+    eth_gas: float = 0.50
+
 class HestonRequest(BaseModel):
     s: float  # Current stock price
     k: float  # Strike price
@@ -684,6 +690,25 @@ async def error_statistics():
     except Exception as e:
         context = create_error_context(endpoint="/health/errors")
         raise handle_api_error(e, context)
+
+@app.post("/margins/calculate")
+async def calculate_margins(request: MarginRequest):
+    """
+    Calculate unit economics for an agentic transaction.
+    Compares Arc L1 vs Ethereum L1 profitability.
+    """
+    try:
+        from ai_core.orchestrator.margin_analyzer import MarginAnalyzer
+        analyzer = MarginAnalyzer(arc_gas_usd=request.arc_gas, eth_gas_usd=request.eth_gas)
+        report = analyzer.break_even_frequency(
+            price_per_call=request.price_usdc,
+            compute_cost=request.compute_cost
+        )
+        return report
+    except ImportError:
+        raise HTTPException(status_code=501, detail="MarginAnalyzer not available")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 # ===== MODEL COMPARISON ENDPOINT =====
 @app.post("/compare/models")

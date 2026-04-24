@@ -195,9 +195,9 @@ def generate_cypher_for_pdf(pdf_path: Path, out: List[str]) -> None:
         # Clamp last section page_end to doc page_count
         sections[-1].page_end = doc.page_count
 
-    # Source node
+    # KnowledgeSource node
     out.append(
-        f"MERGE (s:Source {{id: '{cypher_escape(source_id)}'}})\n"
+        f"MERGE (s:KnowledgeSource {{id: '{cypher_escape(source_id)}'}})\n"
         f"SET s.title = '{cypher_escape(source_title)}', "
         f"s.path = '{cypher_escape(str(pdf_path))}', "
         f"s.type = 'book';\n"
@@ -208,7 +208,7 @@ def generate_cypher_for_pdf(pdf_path: Path, out: List[str]) -> None:
         out.append(
             "MERGE (sec:Section {id: '%s'})\n"
             "SET sec.title = '%s', sec.level = %d, sec.pageStart = %d, sec.pageEnd = %d;\n"
-            "MATCH (s:Source {id: '%s'}), (sec:Section {id: '%s'})\n"
+            "MATCH (s:KnowledgeSource {id: '%s'}), (sec:Section {id: '%s'})\n"
             "MERGE (s)-[:HAS_SECTION]->(sec);\n"
             % (
                 cypher_escape(sec.id),

@@ -391,6 +391,33 @@ def analyze_workspace_data(
     }
 
 
+def analyze_margin(
+    llm: Union[OllamaClient, Any],
+    price_usdc: float = 0.005,
+    compute_cost: float = 0.002,
+) -> dict[str, Any]:
+    """Skill: Explain the economic advantage of Arc L1 using MarginAnalyzer."""
+    try:
+        from ai_core.orchestrator.margin_analyzer import MarginAnalyzer
+        analyzer = MarginAnalyzer()
+        report = analyzer.break_even_frequency(price_usdc, compute_cost)
+        
+        system = "You are a financial engineering and blockchain economics expert."
+        user = (
+            f"Compare the unit economics of an agentic micro-transaction on Arc L1 vs Ethereum L1.\n"
+            f"Service Price: ${report['parameters']['price_per_call']} USDC\n"
+            f"Compute Cost: ${report['parameters']['compute_cost']}\n"
+            f"Arc Profit: ${report['margins']['arc_profit_usd']:.5f} ({report['margins']['arc_margin_pct']:.1f}%)\n"
+            f"ETH Profit: ${report['margins']['eth_profit_usd']:.5f} ({report['margins']['eth_margin_pct']:.1f}%)\n\n"
+            f"Verdict: {report['verdict']['advantage']}\n\n"
+            "Explain why Arc L1 is necessary for this agentic economy model. Keep it concise."
+        )
+        reply = llm.generate(user, system=system, temperature=0.3)
+        return {"reply": reply, "sources": [{"type": "margin_analysis", "platform": "Arc L1"}]}
+    except ImportError:
+        return {"reply": "Margin analysis module not available in this environment.", "sources": []}
+
+
 def route_and_run(
     kb: Optional[Neo4jKnowledgeClient],
     llm: Union[OllamaClient, Any],
@@ -459,6 +486,10 @@ def route_and_run(
     # Strategy suggestion routing (before formula/concept routing)
     if _is_strategy_question(msg):
         return suggest_trading_strategies(kb, llm, message, menu_id)
+
+    # Margin / Economic advantage routing
+    if any(t in msg for t in ["margin", "economic", "advantage", "why arc", "gas cost", "profitability"]):
+        return analyze_margin(llm)
 
     # Heuristic routing from message text
     if "compare" in msg or " vs " in msg or " versus " in msg:

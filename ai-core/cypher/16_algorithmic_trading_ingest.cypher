@@ -1,11 +1,11 @@
 // Auto-generated Cypher from pdf_ingest.py
 // Load into Neo4j AFTER core schema is in place.
-MERGE (s:Source {id: '(springer_proceedings_in_mathematics_&_statistics_214)_jaime_a._londoño,_josé_garrido,_monique_jeanblanc_(eds.)_-_actuarial_sciences_and_quantitative_finance__icasqf2016,_cartagena,_colombia,_june_201(z-lib.io)'})
+MERGE (s:KnowledgeSource {id: '(springer_proceedings_in_mathematics_&_statistics_214)_jaime_a._londoño,_josé_garrido,_monique_jeanblanc_(eds.)_-_actuarial_sciences_and_quantitative_finance__icasqf2016,_cartagena,_colombia,_june_201(z-lib.io)'})
 SET s.title = '(Springer Proceedings in Mathematics & Statistics 214) Jaime A. Londoño, José Garrido, Monique Jeanblanc (eds.) - Actuarial Sciences and Quantitative Finance_ ICASQF2016, Cartagena, Colombia, June 201(Z-Lib.io)', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\(Springer Proceedings in Mathematics & Statistics 214) Jaime A. Londoño, José Garrido, Monique Jeanblanc (eds.) - Actuarial Sciences and Quantitative Finance_ ICASQF2016, Cartagena, Colombia, June 201(Z-Lib.io).pdf', s.type = 'book';
 
 MERGE (sec:Section {id: '(springer_proceedings_in_mathematics_&_statistics_214)_jaime_a._londoño,_josé_garrido,_monique_jeanblanc_(eds.)_-_actuarial_sciences_and_quantitative_finance__icasqf2016,_cartagena,_colombia,_june_201(z-lib.io):1'})
 SET sec.title = 'Full Book', sec.level = 0, sec.pageStart = 1, sec.pageEnd = 177;
-MATCH (s:Source {id: '(springer_proceedings_in_mathematics_&_statistics_214)_jaime_a._londoño,_josé_garrido,_monique_jeanblanc_(eds.)_-_actuarial_sciences_and_quantitative_finance__icasqf2016,_cartagena,_colombia,_june_201(z-lib.io)'}), (sec:Section {id: '(springer_proceedings_in_mathematics_&_statistics_214)_jaime_a._londoño,_josé_garrido,_monique_jeanblanc_(eds.)_-_actuarial_sciences_and_quantitative_finance__icasqf2016,_cartagena,_colombia,_june_201(z-lib.io):1'})
+MATCH (s:KnowledgeSource {id: '(springer_proceedings_in_mathematics_&_statistics_214)_jaime_a._londoño,_josé_garrido,_monique_jeanblanc_(eds.)_-_actuarial_sciences_and_quantitative_finance__icasqf2016,_cartagena,_colombia,_june_201(z-lib.io)'}), (sec:Section {id: '(springer_proceedings_in_mathematics_&_statistics_214)_jaime_a._londoño,_josé_garrido,_monique_jeanblanc_(eds.)_-_actuarial_sciences_and_quantitative_finance__icasqf2016,_cartagena,_colombia,_june_201(z-lib.io):1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (f:Formula {id: '(springer_proceedings_in_mathematics_&_statistics_214)_jaime_a._londoño,_josé_garrido,_monique_jeanblanc_(eds.)_-_actuarial_sciences_and_quantitative_finance__icasqf2016,_cartagena,_colombia,_june_201(z-lib.io):1:f1'})
@@ -163,12 +163,12 @@ SET f.text = 'FVA0~  l=0  –  0', f.meaning = '', f.sourceId = '(springer_proce
 MATCH (sec:Section {id: '(springer_proceedings_in_mathematics_&_statistics_214)_jaime_a._londoño,_josé_garrido,_monique_jeanblanc_(eds.)_-_actuarial_sciences_and_quantitative_finance__icasqf2016,_cartagena,_colombia,_june_201(z-lib.io):1'}), (f:Formula {id: '(springer_proceedings_in_mathematics_&_statistics_214)_jaime_a._londoño,_josé_garrido,_monique_jeanblanc_(eds.)_-_actuarial_sciences_and_quantitative_finance__icasqf2016,_cartagena,_colombia,_june_201(z-lib.io):1:f31'})
 MERGE (sec)-[:HAS_FORMULA]->(f);
 
-MERGE (s:Source {id: '(wiley_trading_series)_ernest_p_chan_-_quantitative_trading___how_to_build_your_own_algorithmic_trading_business-john_wiley_&_sons__(2009)'})
+MERGE (s:KnowledgeSource {id: '(wiley_trading_series)_ernest_p_chan_-_quantitative_trading___how_to_build_your_own_algorithmic_trading_business-john_wiley_&_sons__(2009)'})
 SET s.title = '(Wiley trading series) Ernest P Chan - Quantitative trading _ how to build your own algorithmic trading business-John Wiley & Sons  (2009)', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\(Wiley trading series) Ernest P Chan - Quantitative trading _ how to build your own algorithmic trading business-John Wiley & Sons  (2009).pdf', s.type = 'book';
 
 MERGE (sec:Section {id: '(wiley_trading_series)_ernest_p_chan_-_quantitative_trading___how_to_build_your_own_algorithmic_trading_business-john_wiley_&_sons__(2009):1'})
 SET sec.title = 'Full Book', sec.level = 0, sec.pageStart = 1, sec.pageEnd = 181;
-MATCH (s:Source {id: '(wiley_trading_series)_ernest_p_chan_-_quantitative_trading___how_to_build_your_own_algorithmic_trading_business-john_wiley_&_sons__(2009)'}), (sec:Section {id: '(wiley_trading_series)_ernest_p_chan_-_quantitative_trading___how_to_build_your_own_algorithmic_trading_business-john_wiley_&_sons__(2009):1'})
+MATCH (s:KnowledgeSource {id: '(wiley_trading_series)_ernest_p_chan_-_quantitative_trading___how_to_build_your_own_algorithmic_trading_business-john_wiley_&_sons__(2009)'}), (sec:Section {id: '(wiley_trading_series)_ernest_p_chan_-_quantitative_trading___how_to_build_your_own_algorithmic_trading_business-john_wiley_&_sons__(2009):1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (f:Formula {id: '(wiley_trading_series)_ernest_p_chan_-_quantitative_trading___how_to_build_your_own_algorithmic_trading_business-john_wiley_&_sons__(2009):1:f1'})
@@ -1391,20 +1391,20 @@ SET f.text = 'yearID=2004.', f.meaning = 'nian Motion.” Physical Review 36: 82
 MATCH (sec:Section {id: '(wiley_trading_series)_ernest_p_chan_-_quantitative_trading___how_to_build_your_own_algorithmic_trading_business-john_wiley_&_sons__(2009):1'}), (f:Formula {id: '(wiley_trading_series)_ernest_p_chan_-_quantitative_trading___how_to_build_your_own_algorithmic_trading_business-john_wiley_&_sons__(2009):1:f244'})
 MERGE (sec)-[:HAS_FORMULA]->(f);
 
-MERGE (s:Source {id: '5_fooled_by_randomness_-_nassim_taleb'})
+MERGE (s:KnowledgeSource {id: '5_fooled_by_randomness_-_nassim_taleb'})
 SET s.title = '5 Fooled by Randomness - Nassim Taleb', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\5 Fooled by Randomness - Nassim Taleb.pdf', s.type = 'book';
 
 MERGE (sec:Section {id: '5_fooled_by_randomness_-_nassim_taleb:1'})
 SET sec.title = 'Full Book', sec.level = 0, sec.pageStart = 1, sec.pageEnd = 219;
-MATCH (s:Source {id: '5_fooled_by_randomness_-_nassim_taleb'}), (sec:Section {id: '5_fooled_by_randomness_-_nassim_taleb:1'})
+MATCH (s:KnowledgeSource {id: '5_fooled_by_randomness_-_nassim_taleb'}), (sec:Section {id: '5_fooled_by_randomness_-_nassim_taleb:1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
-MERGE (s:Source {id: 'aat-ebook-20170711_copy'})
+MERGE (s:KnowledgeSource {id: 'aat-ebook-20170711_copy'})
 SET s.title = 'aat-ebook-20170711 Copy', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\aat-ebook-20170711 Copy.pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'aat-ebook-20170711_copy:12'})
 SET sec.title = 'Cointegrated Time Series', sec.level = 1, sec.pageStart = 155, sec.pageEnd = 509;
-MATCH (s:Source {id: 'aat-ebook-20170711_copy'}), (sec:Section {id: 'aat-ebook-20170711_copy:12'})
+MATCH (s:KnowledgeSource {id: 'aat-ebook-20170711_copy'}), (sec:Section {id: 'aat-ebook-20170711_copy:12'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (f:Formula {id: 'aat-ebook-20170711_copy:12:f1'})
@@ -8347,20 +8347,20 @@ SET f.text = 'benchmark="SPY", rolling_sharpe=True', f.meaning = '', f.sourceId 
 MATCH (sec:Section {id: 'aat-ebook-20170711_copy:12'}), (f:Formula {id: 'aat-ebook-20170711_copy:12:f1388'})
 MERGE (sec)-[:HAS_FORMULA]->(f);
 
-MERGE (s:Source {id: 'dynamic_hedging-taleb'})
+MERGE (s:KnowledgeSource {id: 'dynamic_hedging-taleb'})
 SET s.title = 'Dynamic_Hedging-Taleb', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\Dynamic_Hedging-Taleb.pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'dynamic_hedging-taleb:1'})
 SET sec.title = 'Full Book', sec.level = 0, sec.pageStart = 1, sec.pageEnd = 516;
-MATCH (s:Source {id: 'dynamic_hedging-taleb'}), (sec:Section {id: 'dynamic_hedging-taleb:1'})
+MATCH (s:KnowledgeSource {id: 'dynamic_hedging-taleb'}), (sec:Section {id: 'dynamic_hedging-taleb:1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
-MERGE (s:Source {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io)_(1)'})
+MERGE (s:KnowledgeSource {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io)_(1)'})
 SET s.title = 'Financial Mathematics, Derivatives and Structured Products', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\Financial Mathematics, Derivatives and Structured Products (Springer Finance) (Z-lib.io) (1).pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io)_(1):1'})
 SET sec.title = 'Full Book', sec.level = 0, sec.pageStart = 1, sec.pageEnd = 478;
-MATCH (s:Source {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io)_(1)'}), (sec:Section {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io)_(1):1'})
+MATCH (s:KnowledgeSource {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io)_(1)'}), (sec:Section {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io)_(1):1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (f:Formula {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io)_(1):1:f1'})
@@ -14733,12 +14733,12 @@ SET f.text = 'upper X Subscript t Baseline equals r 0 plus k t plus 2 integral S
 MATCH (sec:Section {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io)_(1):1'}), (f:Formula {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io)_(1):1:f1274'})
 MERGE (sec)-[:HAS_FORMULA]->(f);
 
-MERGE (s:Source {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io)'})
+MERGE (s:KnowledgeSource {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io)'})
 SET s.title = 'Financial Mathematics, Derivatives and Structured Products', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\Financial Mathematics, Derivatives and Structured Products (Springer Finance) (Z-lib.io).pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io):1'})
 SET sec.title = 'Full Book', sec.level = 0, sec.pageStart = 1, sec.pageEnd = 478;
-MATCH (s:Source {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io)'}), (sec:Section {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io):1'})
+MATCH (s:KnowledgeSource {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io)'}), (sec:Section {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io):1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (f:Formula {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io):1:f1'})
@@ -21111,12 +21111,12 @@ SET f.text = 'upper X Subscript t Baseline equals r 0 plus k t plus 2 integral S
 MATCH (sec:Section {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io):1'}), (f:Formula {id: 'financial_mathematics,_derivatives_and_structured_products_(springer_finance)_(z-lib.io):1:f1274'})
 MERGE (sec)-[:HAS_FORMULA]->(f);
 
-MERGE (s:Source {id: 'fundamental_analysis_and_technical_analysis_integrated_system'})
+MERGE (s:KnowledgeSource {id: 'fundamental_analysis_and_technical_analysis_integrated_system'})
 SET s.title = 'Fundamental analysis and technical analysis integrated system for stock filtration', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\Fundamental analysis and technical analysis integrated system.pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'fundamental_analysis_and_technical_analysis_integrated_system:1'})
 SET sec.title = 'Full Book', sec.level = 0, sec.pageStart = 1, sec.pageEnd = 13;
-MATCH (s:Source {id: 'fundamental_analysis_and_technical_analysis_integrated_system'}), (sec:Section {id: 'fundamental_analysis_and_technical_analysis_integrated_system:1'})
+MATCH (s:KnowledgeSource {id: 'fundamental_analysis_and_technical_analysis_integrated_system'}), (sec:Section {id: 'fundamental_analysis_and_technical_analysis_integrated_system:1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (f:Formula {id: 'fundamental_analysis_and_technical_analysis_integrated_system:1:f1'})
@@ -21169,37 +21169,37 @@ SET f.text = 'i=1 Pi', f.meaning = 'desire day, and Pi is the closing value of t
 MATCH (sec:Section {id: 'fundamental_analysis_and_technical_analysis_integrated_system:1'}), (f:Formula {id: 'fundamental_analysis_and_technical_analysis_integrated_system:1:f10'})
 MERGE (sec)-[:HAS_FORMULA]->(f);
 
-MERGE (s:Source {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil'})
+MERGE (s:KnowledgeSource {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil'})
 SET s.title = 'How+To+Make+Money+In+Stocks+-+William+J.+O\'Neil', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\How+To+Make+Money+In+Stocks+-+William+J.+O\'Neil.pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:1'})
 SET sec.title = '2 3 4 5 6 7 8 9', sec.level = 1, sec.pageStart = 0, sec.pageEnd = 0;
-MATCH (s:Source {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil'}), (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:1'})
+MATCH (s:KnowledgeSource {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil'}), (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:1'})
 SET sec.title = '2 3 4 5 6 7 8 9', sec.level = 1, sec.pageStart = 0, sec.pageEnd = 3;
-MATCH (s:Source {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil'}), (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:1'})
+MATCH (s:KnowledgeSource {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil'}), (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:7'})
 SET sec.title = '6 5', sec.level = 1, sec.pageStart = 4, sec.pageEnd = 4;
-MATCH (s:Source {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil'}), (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:7'})
+MATCH (s:KnowledgeSource {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil'}), (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:7'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:7'})
 SET sec.title = '6 5', sec.level = 1, sec.pageStart = 4, sec.pageEnd = 8;
-MATCH (s:Source {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil'}), (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:7'})
+MATCH (s:KnowledgeSource {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil'}), (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:7'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:9'})
 SET sec.title = '0', sec.level = 1, sec.pageStart = 9, sec.pageEnd = 9;
-MATCH (s:Source {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil'}), (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:9'})
+MATCH (s:KnowledgeSource {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil'}), (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:9'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:9'})
 SET sec.title = '0', sec.level = 1, sec.pageStart = 9, sec.pageEnd = 143;
-MATCH (s:Source {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil'}), (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:9'})
+MATCH (s:KnowledgeSource {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil'}), (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:9'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (f:Formula {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:1:f1'})
@@ -21672,12 +21672,12 @@ SET f.text = 'M = Market Direction', f.meaning = '', f.sourceId = 'how+to+make+m
 MATCH (sec:Section {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:9'}), (f:Formula {id: 'how+to+make+money+in+stocks+-+william+j.+o\'neil:9:f40'})
 MERGE (sec)-[:HAS_FORMULA]->(f);
 
-MERGE (s:Source {id: 'igor_tulchinsky_et_al._-_finding_alphas__a_quantitative_approach_to_building_trading_strategies-wiley_(2020)'})
+MERGE (s:KnowledgeSource {id: 'igor_tulchinsky_et_al._-_finding_alphas__a_quantitative_approach_to_building_trading_strategies-wiley_(2020)'})
 SET s.title = 'Igor Tulchinsky et al. - Finding Alphas_ A Quantitative Approach to Building Trading Strategies-Wiley (2020)', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\Igor Tulchinsky et al. - Finding Alphas_ A Quantitative Approach to Building Trading Strategies-Wiley (2020).pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'igor_tulchinsky_et_al._-_finding_alphas__a_quantitative_approach_to_building_trading_strategies-wiley_(2020):1'})
 SET sec.title = 'Full Book', sec.level = 0, sec.pageStart = 1, sec.pageEnd = 321;
-MATCH (s:Source {id: 'igor_tulchinsky_et_al._-_finding_alphas__a_quantitative_approach_to_building_trading_strategies-wiley_(2020)'}), (sec:Section {id: 'igor_tulchinsky_et_al._-_finding_alphas__a_quantitative_approach_to_building_trading_strategies-wiley_(2020):1'})
+MATCH (s:KnowledgeSource {id: 'igor_tulchinsky_et_al._-_finding_alphas__a_quantitative_approach_to_building_trading_strategies-wiley_(2020)'}), (sec:Section {id: 'igor_tulchinsky_et_al._-_finding_alphas__a_quantitative_approach_to_building_trading_strategies-wiley_(2020):1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (f:Formula {id: 'igor_tulchinsky_et_al._-_finding_alphas__a_quantitative_approach_to_building_trading_strategies-wiley_(2020):1:f1'})
@@ -21810,12 +21810,12 @@ SET f.text = 'abstract=676501', f.meaning = 'no. 2002-13a; Sauder School of Busi
 MATCH (sec:Section {id: 'igor_tulchinsky_et_al._-_finding_alphas__a_quantitative_approach_to_building_trading_strategies-wiley_(2020):1'}), (f:Formula {id: 'igor_tulchinsky_et_al._-_finding_alphas__a_quantitative_approach_to_building_trading_strategies-wiley_(2020):1:f26'})
 MERGE (sec)-[:HAS_FORMULA]->(f);
 
-MERGE (s:Source {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io)_(1)'})
+MERGE (s:KnowledgeSource {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io)_(1)'})
 SET s.title = 'Financial Calculus', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\Martin Baxter, Andrew Rennie - Financial Calculus_ An Introduction to Derivative Pricing-Cambridge University Press (2012)(Z-Lib.io) (1).pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io)_(1):1'})
 SET sec.title = 'Full Book', sec.level = 0, sec.pageStart = 1, sec.pageEnd = 245;
-MATCH (s:Source {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io)_(1)'}), (sec:Section {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io)_(1):1'})
+MATCH (s:KnowledgeSource {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io)_(1)'}), (sec:Section {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io)_(1):1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (f:Formula {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io)_(1):1:f1'})
@@ -23848,12 +23848,12 @@ SET f.text = 'gale X t = exp(Mt -', f.meaning = '', f.sourceId = 'martin_baxter,
 MATCH (sec:Section {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io)_(1):1'}), (f:Formula {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io)_(1):1:f406'})
 MERGE (sec)-[:HAS_FORMULA]->(f);
 
-MERGE (s:Source {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io)'})
+MERGE (s:KnowledgeSource {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io)'})
 SET s.title = 'Financial Calculus', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\Martin Baxter, Andrew Rennie - Financial Calculus_ An Introduction to Derivative Pricing-Cambridge University Press (2012)(Z-Lib.io).pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io):1'})
 SET sec.title = 'Full Book', sec.level = 0, sec.pageStart = 1, sec.pageEnd = 245;
-MATCH (s:Source {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io)'}), (sec:Section {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io):1'})
+MATCH (s:KnowledgeSource {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io)'}), (sec:Section {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io):1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (f:Formula {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io):1:f1'})
@@ -25886,12 +25886,12 @@ SET f.text = 'gale X t = exp(Mt -', f.meaning = '', f.sourceId = 'martin_baxter,
 MATCH (sec:Section {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io):1'}), (f:Formula {id: 'martin_baxter,_andrew_rennie_-_financial_calculus__an_introduction_to_derivative_pricing-cambridge_university_press_(2012)(z-lib.io):1:f406'})
 MERGE (sec)-[:HAS_FORMULA]->(f);
 
-MERGE (s:Source {id: 'options_futures_and_other_derivatives_by_john_c_hull_(1)'})
+MERGE (s:KnowledgeSource {id: 'options_futures_and_other_derivatives_by_john_c_hull_(1)'})
 SET s.title = 'untitled', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\Options Futures and Other Derivatives by John C Hull (1).PDF', s.type = 'book';
 
 MERGE (sec:Section {id: 'options_futures_and_other_derivatives_by_john_c_hull_(1):10'})
 SET sec.title = '9 8 7 6 5', sec.level = 1, sec.pageStart = 4, sec.pageEnd = 863;
-MATCH (s:Source {id: 'options_futures_and_other_derivatives_by_john_c_hull_(1)'}), (sec:Section {id: 'options_futures_and_other_derivatives_by_john_c_hull_(1):10'})
+MATCH (s:KnowledgeSource {id: 'options_futures_and_other_derivatives_by_john_c_hull_(1)'}), (sec:Section {id: 'options_futures_and_other_derivatives_by_john_c_hull_(1):10'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (f:Formula {id: 'options_futures_and_other_derivatives_by_john_c_hull_(1):10:f1'})
@@ -27539,12 +27539,12 @@ SET f.text = 'ExpLoss  ðSpread  PVPmts=10,000Þ', f.meaning = 'point for one 
 MATCH (sec:Section {id: 'options_futures_and_other_derivatives_by_john_c_hull_(1):10'}), (f:Formula {id: 'options_futures_and_other_derivatives_by_john_c_hull_(1):10:f329'})
 MERGE (sec)-[:HAS_FORMULA]->(f);
 
-MERGE (s:Source {id: 'skin-in-the-game-nassim-nicholas-taleb'})
+MERGE (s:KnowledgeSource {id: 'skin-in-the-game-nassim-nicholas-taleb'})
 SET s.title = 'Skin in the Game', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\skin-in-the-game-nassim-nicholas-taleb.pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'skin-in-the-game-nassim-nicholas-taleb:1'})
 SET sec.title = 'Full Book', sec.level = 0, sec.pageStart = 1, sec.pageEnd = 318;
-MATCH (s:Source {id: 'skin-in-the-game-nassim-nicholas-taleb'}), (sec:Section {id: 'skin-in-the-game-nassim-nicholas-taleb:1'})
+MATCH (s:KnowledgeSource {id: 'skin-in-the-game-nassim-nicholas-taleb'}), (sec:Section {id: 'skin-in-the-game-nassim-nicholas-taleb:1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (f:Formula {id: 'skin-in-the-game-nassim-nicholas-taleb:1:f1'})
@@ -27557,40 +27557,40 @@ SET f.text = 'with ruin set at X = 0), both', f.meaning = 'probability of ruin.'
 MATCH (sec:Section {id: 'skin-in-the-game-nassim-nicholas-taleb:1'}), (f:Formula {id: 'skin-in-the-game-nassim-nicholas-taleb:1:f2'})
 MERGE (sec)-[:HAS_FORMULA]->(f);
 
-MERGE (s:Source {id: 'steve-nison-japanese-candlestick-charting-techniques-prentice-hall-press-2001'})
+MERGE (s:KnowledgeSource {id: 'steve-nison-japanese-candlestick-charting-techniques-prentice-hall-press-2001'})
 SET s.title = 'Japanese Candlestick Charting Techniques', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\Steve-Nison-Japanese-Candlestick-Charting-Techniques-Prentice-Hall-Press-2001.pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'steve-nison-japanese-candlestick-charting-techniques-prentice-hall-press-2001:1'})
 SET sec.title = 'Full Book', sec.level = 0, sec.pageStart = 1, sec.pageEnd = 298;
-MATCH (s:Source {id: 'steve-nison-japanese-candlestick-charting-techniques-prentice-hall-press-2001'}), (sec:Section {id: 'steve-nison-japanese-candlestick-charting-techniques-prentice-hall-press-2001:1'})
+MATCH (s:KnowledgeSource {id: 'steve-nison-japanese-candlestick-charting-techniques-prentice-hall-press-2001'}), (sec:Section {id: 'steve-nison-japanese-candlestick-charting-techniques-prentice-hall-press-2001:1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
-MERGE (s:Source {id: 'successful_algorithmic_trading'})
+MERGE (s:KnowledgeSource {id: 'successful_algorithmic_trading'})
 SET s.title = 'Successful Algorithmic Trading', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\Successful Algorithmic Trading.pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'successful_algorithmic_trading:10'})
 SET sec.title = 'Time Series Analysis', sec.level = 1, sec.pageStart = 87, sec.pageEnd = 96;
-MATCH (s:Source {id: 'successful_algorithmic_trading'}), (sec:Section {id: 'successful_algorithmic_trading:10'})
+MATCH (s:KnowledgeSource {id: 'successful_algorithmic_trading'}), (sec:Section {id: 'successful_algorithmic_trading:10'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (sec:Section {id: 'successful_algorithmic_trading:11'})
 SET sec.title = 'Forecasting', sec.level = 1, sec.pageStart = 97, sec.pageEnd = 108;
-MATCH (s:Source {id: 'successful_algorithmic_trading'}), (sec:Section {id: 'successful_algorithmic_trading:11'})
+MATCH (s:KnowledgeSource {id: 'successful_algorithmic_trading'}), (sec:Section {id: 'successful_algorithmic_trading:11'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (sec:Section {id: 'successful_algorithmic_trading:12'})
 SET sec.title = 'Performance Measurement', sec.level = 1, sec.pageStart = 109, sec.pageEnd = 162;
-MATCH (s:Source {id: 'successful_algorithmic_trading'}), (sec:Section {id: 'successful_algorithmic_trading:12'})
+MATCH (s:KnowledgeSource {id: 'successful_algorithmic_trading'}), (sec:Section {id: 'successful_algorithmic_trading:12'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (sec:Section {id: 'successful_algorithmic_trading:15'})
 SET sec.title = 'Trading Strategy Implementation', sec.level = 1, sec.pageStart = 163, sec.pageEnd = 180;
-MATCH (s:Source {id: 'successful_algorithmic_trading'}), (sec:Section {id: 'successful_algorithmic_trading:15'})
+MATCH (s:KnowledgeSource {id: 'successful_algorithmic_trading'}), (sec:Section {id: 'successful_algorithmic_trading:15'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (sec:Section {id: 'successful_algorithmic_trading:16'})
 SET sec.title = 'Strategy Optimisation', sec.level = 1, sec.pageStart = 181, sec.pageEnd = 208;
-MATCH (s:Source {id: 'successful_algorithmic_trading'}), (sec:Section {id: 'successful_algorithmic_trading:16'})
+MATCH (s:KnowledgeSource {id: 'successful_algorithmic_trading'}), (sec:Section {id: 'successful_algorithmic_trading:16'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (f:Formula {id: 'successful_algorithmic_trading:10:f1'})
@@ -29483,12 +29483,12 @@ SET f.text = 'At wl = 100 the diﬀerences betwee the smallest and largest Sharp
 MATCH (sec:Section {id: 'successful_algorithmic_trading:16'}), (f:Formula {id: 'successful_algorithmic_trading:16:f159'})
 MERGE (sec)-[:HAS_FORMULA]->(f);
 
-MERGE (s:Source {id: 'taleb_the-black-swan'})
+MERGE (s:KnowledgeSource {id: 'taleb_the-black-swan'})
 SET s.title = 'The Black Swan: The Impact of the Highly Improbable (Random House, 2007)', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\Taleb_The-Black-Swan.pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'taleb_the-black-swan:1'})
 SET sec.title = 'Full Book', sec.level = 0, sec.pageStart = 1, sec.pageEnd = 401;
-MATCH (s:Source {id: 'taleb_the-black-swan'}), (sec:Section {id: 'taleb_the-black-swan:1'})
+MATCH (s:KnowledgeSource {id: 'taleb_the-black-swan'}), (sec:Section {id: 'taleb_the-black-swan:1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (f:Formula {id: 'taleb_the-black-swan:1:f1'})
@@ -29496,28 +29496,28 @@ SET f.text = 'used a probability of exceeding with a power-law exponent of 3/2: 
 MATCH (sec:Section {id: 'taleb_the-black-swan:1'}), (f:Formula {id: 'taleb_the-black-swan:1:f1'})
 MERGE (sec)-[:HAS_FORMULA]->(f);
 
-MERGE (s:Source {id: 'the-disciplined-trader-developing-winning-attitudes'})
+MERGE (s:KnowledgeSource {id: 'the-disciplined-trader-developing-winning-attitudes'})
 SET s.title = 'The-Disciplined-Trader-Developing-Winning-Attitudes', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\The-Disciplined-Trader-Developing-Winning-Attitudes.pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'the-disciplined-trader-developing-winning-attitudes:1'})
 SET sec.title = 'Full Book', sec.level = 0, sec.pageStart = 1, sec.pageEnd = 131;
-MATCH (s:Source {id: 'the-disciplined-trader-developing-winning-attitudes'}), (sec:Section {id: 'the-disciplined-trader-developing-winning-attitudes:1'})
+MATCH (s:KnowledgeSource {id: 'the-disciplined-trader-developing-winning-attitudes'}), (sec:Section {id: 'the-disciplined-trader-developing-winning-attitudes:1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
-MERGE (s:Source {id: 'trading_in_the_zone_mark_douglas'})
+MERGE (s:KnowledgeSource {id: 'trading_in_the_zone_mark_douglas'})
 SET s.title = 'Microsoft Word - Mark Douglas. Trading in the Zone _English_.rtf', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\Trading In the Zone Mark Douglas.pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'trading_in_the_zone_mark_douglas:10'})
 SET sec.title = '9876 5', sec.level = 1, sec.pageStart = 4321, sec.pageEnd = 143;
-MATCH (s:Source {id: 'trading_in_the_zone_mark_douglas'}), (sec:Section {id: 'trading_in_the_zone_mark_douglas:10'})
+MATCH (s:KnowledgeSource {id: 'trading_in_the_zone_mark_douglas'}), (sec:Section {id: 'trading_in_the_zone_mark_douglas:10'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
-MERGE (s:Source {id: 'valuation_and_volatility__stakeholder\'s_perspective_(z-lib.io)'})
+MERGE (s:KnowledgeSource {id: 'valuation_and_volatility__stakeholder\'s_perspective_(z-lib.io)'})
 SET s.title = 'Valuation and Volatility_ Stakeholder\'s Perspective (Z-lib.io)', s.path = 'C:\\Users\\ThinkPad\\Documents\\DoraHacks\\AlgorithmicTradingStrategies\\Valuation and Volatility_ Stakeholder\'s Perspective (Z-lib.io).pdf', s.type = 'book';
 
 MERGE (sec:Section {id: 'valuation_and_volatility__stakeholder\'s_perspective_(z-lib.io):1'})
 SET sec.title = 'Full Book', sec.level = 0, sec.pageStart = 1, sec.pageEnd = 177;
-MATCH (s:Source {id: 'valuation_and_volatility__stakeholder\'s_perspective_(z-lib.io)'}), (sec:Section {id: 'valuation_and_volatility__stakeholder\'s_perspective_(z-lib.io):1'})
+MATCH (s:KnowledgeSource {id: 'valuation_and_volatility__stakeholder\'s_perspective_(z-lib.io)'}), (sec:Section {id: 'valuation_and_volatility__stakeholder\'s_perspective_(z-lib.io):1'})
 MERGE (s)-[:HAS_SECTION]->(sec);
 
 MERGE (f:Formula {id: 'valuation_and_volatility__stakeholder\'s_perspective_(z-lib.io):1:f1'})

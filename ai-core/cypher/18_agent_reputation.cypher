@@ -1,32 +1,35 @@
 // Phase 2: Agent Reputation Graph (ERC-8004 alignment)
 
-// 1. Constraints and Indexes
+// 1. Constraints and Indexes (Managed in neo4j_schema.py, but repeated here for standalone completeness)
 CREATE CONSTRAINT agent_did IF NOT EXISTS FOR (a:Agent) REQUIRE a.did IS UNIQUE;
-CREATE CONSTRAINT research_paper_id IF NOT EXISTS FOR (r:ResearchPaper) REQUIRE r.id IS UNIQUE;
+CREATE CONSTRAINT knowledge_source_id IF NOT EXISTS FOR (k:KnowledgeSource) REQUIRE k.id IS UNIQUE;
 CREATE INDEX idx_agent_reputation IF NOT EXISTS FOR (a:Agent) ON (a.reputation_score);
-CREATE INDEX idx_research_paper_citations IF NOT EXISTS FOR (r:ResearchPaper) ON (r.citations);
+CREATE INDEX idx_knowledge_source_type IF NOT EXISTS FOR (k:KnowledgeSource) ON (k.type);
 
-// 2. Seed Research Papers
-MERGE (r1:ResearchPaper {id: 'arxiv:1706.03762'})
-SET r1.title = 'Attention is All You Need', 
-    r1.authors = ['Vaswani et al.'], 
-    r1.citations = 120000, 
-    r1.year = 2017,
-    r1.domain = 'Machine Learning';
+// 2. Seed Research Papers (as KnowledgeSource with type='research_paper')
+MERGE (k1:KnowledgeSource {id: 'arxiv:1706.03762'})
+SET k1.title = 'Attention is All You Need', 
+    k1.authors = ['Vaswani et al.'], 
+    k1.citations = 120000, 
+    k1.year = 2017,
+    k1.domain = 'Machine Learning',
+    k1.type = 'research_paper';
 
-MERGE (r2:ResearchPaper {id: 'arxiv:1512.03385'})
-SET r2.title = 'Deep Residual Learning for Image Recognition', 
-    r2.authors = ['He et al.'], 
-    r2.citations = 180000, 
-    r2.year = 2015,
-    r2.domain = 'Machine Learning';
+MERGE (k2:KnowledgeSource {id: 'arxiv:1512.03385'})
+SET k2.title = 'Deep Residual Learning for Image Recognition', 
+    k2.authors = ['He et al.'], 
+    k2.citations = 180000, 
+    k2.year = 2015,
+    k2.domain = 'Machine Learning',
+    k2.type = 'research_paper';
 
-MERGE (r3:ResearchPaper {id: 'quant:2104.00001'})
-SET r3.title = 'Hierarchical Risk Parity on Chain', 
-    r3.authors = ['Lopez de Prado', 'QuantiNova'], 
-    r3.citations = 500, 
-    r3.year = 2021,
-    r3.domain = 'Quantitative Finance';
+MERGE (k3:KnowledgeSource {id: 'quant:2104.00001'})
+SET k3.title = 'Hierarchical Risk Parity on Chain', 
+    k3.authors = ['Lopez de Prado', 'QuantiNova'], 
+    k3.citations = 500, 
+    k3.year = 2021,
+    k3.domain = 'Quantitative Finance',
+    k3.type = 'research_paper';
 
 // 3. Seed Agents
 MERGE (a1:Agent {did: 'did:arc:agent_research_specialist'})
@@ -45,12 +48,12 @@ SET a2.name = 'Trading Agent',
 
 // 4. Establish Citation Links
 MATCH (a:Agent {did: 'did:arc:agent_research_specialist'})
-MATCH (r:ResearchPaper) WHERE r.id IN ['arxiv:1706.03762', 'arxiv:1512.03385']
-MERGE (a)-[:CITES]->(r);
+MATCH (k:KnowledgeSource) WHERE k.id IN ['arxiv:1706.03762', 'arxiv:1512.03385']
+MERGE (a)-[:CITES]->(k);
 
 MATCH (a:Agent {did: 'did:arc:agent_trading_executor'})
-MATCH (r:ResearchPaper {id: 'quant:2104.00001'})
-MERGE (a)-[:CITES]->(r);
+MATCH (k:KnowledgeSource {id: 'quant:2104.00001'})
+MERGE (a)-[:CITES]->(k);
 
 // 5. Calculate & Set Reputation Scores (ERC-8004)
 // Formula: 40% accuracy + 30% citation weight + 30% uptime

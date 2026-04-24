@@ -12,6 +12,7 @@ import { useRef, useEffect, useMemo } from 'react';
 import katex from 'katex';
 import type { Message } from '@/context/AgentContext';
 import { CitationBadge } from '@/components/CitationBadge';
+import { Zap } from 'lucide-react';
 
 export type { Message };
 
@@ -217,6 +218,17 @@ export function ChatInterface({
             {m.role === 'assistant' && m.sources && m.sources.length > 0 && (
               <div className="max-w-[95%]">
                 <CitationBadge sources={m.sources} />
+              </div>
+            )}
+
+            {/* Arc L1 Transaction Receipt */}
+            {m.role === 'assistant' && m.onChainReceipt && (
+              <div className="mt-0.5 flex items-center gap-1.5 px-2 py-1 rounded bg-indigo-500/10 border border-indigo-500/20 text-[10px] text-indigo-400 font-medium">
+                <Zap size={10} className="fill-indigo-500" />
+                <span>Paid {m.onChainReceipt.price.toFixed(4)} USDC via Arc</span>
+                <span className="text-slate-600">|</span>
+                <span className="font-mono opacity-60 truncate max-w-[80px]">{m.onChainReceipt.txHash}</span>
+                {m.onChainReceipt.sponsored && <span className="ml-auto text-amber-500 font-bold uppercase tracking-tighter scale-90">Sponsored</span>}
               </div>
             )}
 

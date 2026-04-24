@@ -18,6 +18,8 @@ import { BlotterWorkspace } from './components/Transact/workspaces/BlotterWorksp
 import { DefiWorkspace } from './components/Transact/workspaces/DefiWorkspace';
 import { DataUniverseExplorer } from './components/DataUniverse/DataUniverseExplorer';
 import { MarketplaceItemPage } from './pages/MarketplaceItemPage';
+import { EconomyContextProvider } from './context/EconomyContext';
+import { AdminControlCenter } from './components/Transact/AdminControlCenter';
 
 const LandingPage = () => <LandingStage />;
 
@@ -25,7 +27,8 @@ const MarketplacePage = () => <MarketplaceStage />;
 
 function App() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col">
+    <EconomyContextProvider>
+      <div className="min-h-screen bg-slate-950 text-white flex flex-col">
       <Header />
       <div className="flex-1 flex flex-col">
         <Routes>
@@ -82,6 +85,9 @@ function App() {
 
             {/* Data Universe */}
             <Route path="universe" element={<DataUniverseExplorer />} />
+
+            {/* Admin / Agentic Economy Control */}
+            <Route path="admin" element={<AdminControlCenter />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -110,11 +116,11 @@ function App() {
                 </div>
               </div>
             </footer>
-          }
-        />
-      </Routes>
-    </div>
-  );
-}
-
+                  }
+                />
+              </Routes>
+            </div>
+            </EconomyContextProvider>
+            );
+            }
 export default App;

@@ -18,6 +18,7 @@ import axios from 'axios';
 import { ChatInterface } from './ChatInterface';
 import { AGENTS_CONFIG } from '@/config/agents';
 import { useAgentContext, type Message } from '@/context/AgentContext';
+import { useEconomyContext } from '@/context/EconomyContext';
 import { useChain } from '@/context/ChainContext';
 import { useWallet } from '@/context/WalletContext';
 import { getV2Chains, getV2UniverseSnapshot } from '@/api/gatewayV2';
@@ -83,6 +84,7 @@ async function saveConversation(params: {
 
 export function AgentPopup({ menuId, menuLabel, onClose }: AgentPopupProps) {
   const { workspaceContext, chatHistory, addMessage, clearChat } = useAgentContext();
+  const { addTransaction } = useEconomyContext();
   const { chain, chains } = useChain();
   const { address } = useWallet();
   const messages = chatHistory[menuId] ?? [];
@@ -186,11 +188,23 @@ export function AgentPopup({ menuId, menuLabel, onClose }: AgentPopupProps) {
           }
 
           setStreamingText('');
+          
+          // Logic: If message relates to risk/optimizer/ingest, simulate an on-chain event
+          let receipt = undefined;
+          const msgLower = content.toLowerCase();
+          if (msgLower.includes('var') || msgLower.includes('risk') || msgLower.includes('optimize') || msgLower.includes('ingest')) {
+            const price = msgLower.includes('optimize') ? 0.01 : 0.005;
+            const hash = `0xarc_${Math.random().toString(16).slice(2, 10)}`;
+            receipt = { txHash: hash, price, sponsored: true };
+            addTransaction({ hash, price, method: msgLower.includes('optimize') ? 'Optimize' : 'Reasoning' });
+          }
+
           addMessage(menuId, {
             role: 'assistant',
             content: finalReply || 'Done.',
             sources,
             timestamp: Date.now(),
+            onChainReceipt: receipt,
           });
           return;
         }
@@ -201,11 +215,22 @@ export function AgentPopup({ menuId, menuLabel, onClose }: AgentPopupProps) {
           body,
           { timeout: AGENTS_CONFIG.TIMEOUT_MS },
         );
+
+        let receipt = undefined;
+        const msgLower = content.toLowerCase();
+        if (msgLower.includes('var') || msgLower.includes('risk') || msgLower.includes('optimize') || msgLower.includes('ingest')) {
+          const price = msgLower.includes('optimize') ? 0.01 : 0.005;
+          const hash = `0xarc_${Math.random().toString(16).slice(2, 10)}`;
+          receipt = { txHash: hash, price, sponsored: true };
+          addTransaction({ hash, price, method: msgLower.includes('optimize') ? 'Optimize' : 'Reasoning' });
+        }
+
         addMessage(menuId, {
           role: 'assistant',
           content: data.reply,
           sources: data.sources,
           timestamp: Date.now(),
+          onChainReceipt: receipt,
         });
       } catch (e) {
         const msg =

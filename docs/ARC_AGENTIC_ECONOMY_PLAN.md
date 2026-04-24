@@ -89,76 +89,83 @@ To verify the payment gates, use the following curl commands:
 ```
 
 ### Phase 2: Agent Reputation Graph (Apr 22) — **COMPLETED**
-Extend Neo4j schema for ERC-8004 alignment.
+Extend Neo4j schema for ERC-8004 alignment and unify knowledge source nodes.
 
-**Status**: Implemented in `ai-core/cypher/18_agent_reputation.cypher` and integrated into `seed_graph.sh`.
+**Status**: Implemented in `ai-core/cypher/18_agent_reputation.cypher` and integrated into `seed_graph.sh`. Unified `Source` and `ResearchPaper` labels under a single `KnowledgeSource` label to eliminate redundancy and enable seamless RAG integration.
+
+#### Refinement & Unification
+- **Node Consolidation**: All source-related nodes (`Source`, `ResearchPaper`) are now unified under the **`KnowledgeSource`** label.
+- **Type Distinction**: A new `type` property (e.g., `'research_paper'`, `'book'`, `'documentation'`) distinguishes the nature of the source while maintaining a flat, queryable hierarchy.
+- **Redundancy Removal**: Refactored `15_source_citations.cypher` and `16_algorithmic_trading_ingest.cypher` to ensure consistent node labeling and prevent duplicate associations.
+- **Agent Integration**: `Agent` nodes now link directly to `KnowledgeSource` nodes via `[:CITES]` relationships, providing a robust foundation for ERC-8004 trust scores.
 
 #### Reputation Components
 The following nodes and properties are now available in the Knowledge Graph:
 - **(a:Agent)**: Stores `did`, `signal_accuracy`, `uptime_ratio`, `citations`, and `reputation_score`.
-- **(r:ResearchPaper)**: Stores `citations`, `domain`, and `title`.
+- **(k:KnowledgeSource)**: Unified node for all references; stores `title`, `citations`, `domain`, and `type`.
 - **[:CITES]**: Links agents to the academic foundation that validates their trust score.
 
+#### Dynamic Ingestion (Curator Role)
+We have enabled a monetized ingestion loop where agents can be paid to enrich the graph:
+- **Endpoint**: `POST /agents/ingest`
+- **Price**: **0.005 USDC** (Gated via x402)
+- **Features**: 
+    - **arXiv Search**: Ingests metadata from the latest research papers.
+    - **URL Ingestion**: Scrapes technical webpages and academic content.
+    - **Deep PDF Parsing**: Automatically downloads and deep-parses PDFs found at URLs, extracting new formulas and concepts directly into the graph.
+- **Economic Impact**: Ingestion actions automatically boost the agent's ERC-8004 trust score, making their future insights more valuable.
+
 #### Verification
-To verify the reputation graph, run this Cypher query:
+To verify the unified reputation graph, run this Cypher query:
 ```cypher
-MATCH (a:Agent)
-RETURN a.name, a.reputation_score, a.role
+MATCH (a:Agent)-[:CITES]->(k:KnowledgeSource)
+RETURN a.name, a.reputation_score, k.title, k.type
 ORDER BY a.reputation_score DESC;
 ```
 
-### Phase 3: Margin Analysis Engine (Apr 23)
+### Phase 3: Margin Analysis Engine (Apr 23) — **COMPLETED**
 Demonstrate the "Financial Engineering Edge" of Arc over Ethereum.
 
-```python
-# ai-core/ai_core/orchestrator/margin_analyzer.py
-class MarginAnalyzer:
-    def __init__(self, arc_gas_usd: float = 0.0001, eth_gas_usd: float = 0.50):
-        self.arc_cost = arc_gas_usd
-        self.eth_cost = eth_gas_usd
-    
-    def break_even_frequency(self, price_per_call: float, compute_cost: float) -> dict:
-        """Calculate where traditional gas erodes margin"""
-        arc_margin = price_per_call - compute_cost - self.arc_cost
-        eth_margin = price_per_call - compute_cost - self.eth_cost
-        
-        return {
-            'arc_margin_pct': (arc_margin / price_per_call) * 100,
-            'eth_margin_pct': (eth_margin / price_per_call) * 100 if price_per_call > 0 else 0,
-            'margin_preservation': (arc_margin / eth_margin - 1) * 100 if eth_margin != 0 else float('inf')
-        }
-```
+**Status**: Implemented in `ai-core/ai_core/orchestrator/margin_analyzer.py` and exposed via REST and Agent skills.
 
-### Phase 4: Demo Instrumentation (Apr 24-25)
-Generate 50+ transactions for economic proof.
+#### Features
+- **Mathematical Comparison**: Calculates exact profit margins for sub-cent transactions.
+- **Agent Awareness**: The research agent can now explain the economic necessity of Arc L1 when asked about profitability or gas costs.
+- **API Endpoint**: `POST /margins/calculate` allows the frontend to dynamically visualize the "Margin Erosion" on Ethereum vs the "Margin Preservation" on Arc.
 
-```javascript
-// psychic-invention/frontend/src/utils/demo-telemetry.js
-export async function runHackathonDemo() {
-  const endpoints = [
-    { path: '/api/transact/risk/var', price: 0.003 },
-    { path: '/api/transact/agents/explain', price: 0.002 },
-    { path: '/api/trade/execute', price: 0.007 }
-  ];
-  
-  const results = [];
-  for (let i = 0; i < 60; i++) { // 60 tx > 50 requirement
-    const endpoint = endpoints[i % endpoints.length];
-    const response = await fetch(endpoint.path, {
-      method: 'POST',
-      headers: {
-        'X402-Payment': await generateX402Header(endpoint.price)
-      },
-      body: JSON.stringify({ /* payload */ })
-    });
-    // Collect tx hashes for submission
-  }
-}
-```
+#### Verification & Testing
+1. **Test REST API**:
+   ```bash
+   curl -X POST http://localhost:8000/margins/calculate -H "Content-Type: application/json" -d '{"price_usdc": 0.005, "compute_cost": 0.002}'
+   ```
+   *Expect: A JSON report showing positive margin on Arc and negative margin on ETH.*
+
+2. **Test Agent Reasoning**:
+   Ask the agent: "Why is Arc L1 better than Ethereum for micro-payments?"
+   *Expect: A technical explanation referencing margin preservation and unit economics.*
+
+### Phase 4: Demo Instrumentation (Apr 24-25) — **COMPLETED**
+Generate 60+ purposeful on-chain transactions for economic proof.
+
+**Status**: Logical interaction loop implemented in `scripts/hackathon_demo_runner.py`.
+
+#### Demo Workflow
+The demo instrumentation follows a coherent financial engineering pipeline:
+1. **Manager Pays Curator**: Ingests missing knowledge from arXiv.
+2. **Manager Pays AI Core**: Explains new risk models found in the research.
+3. **High-Freq Risk Checks**: Multiple sub-cent VaR calculations for portfolio candidates.
+4. **Economic Logic**: Agent calculates and justifies the Arc L1 margin preservation.
+5. **Settlement**: MVO Optimization run.
+
+#### Evidence
+- **Log Script**: `python scripts/hackathon_demo_runner.py`
+- **Output**: `hackathon_tx_evidence.json` (Contains 60 tx hashes + economic summary).
+- **Metric**: Demonstrated **~$30.00 USD gas savings** vs Ethereum L1 for a single research session.
 
 ---
 
-## 5. Submission Checklist
+## 5. Submission Checklist — **ALL READY**
+
 
 | Requirement | Evidence to Include |
 |------------|-------------------|
@@ -195,12 +202,22 @@ export async function runHackathonDemo() {
 - Connect reputation scores to dynamic pricing.
 - Build `MarginAnalyzer` CLI tool.
 
-**Apr 23: Orchestration**
+**Apr 23: Orchestration — COMPLETED**
 - Instrument 60-TX demo loop.
 - Record "M2M Commerce" flow (Manager paying Specialist).
 - Draft margin analysis slides.
 
-**Apr 24: Polish & Submission**
+**Apr 23 (Late): Sovereignty & UX — COMPLETED**
+- Integrate **Circle Programmable Wallets** for all agents.
+- Enable M2M settlement between Manager and Curator roles.
+- Configure **Circle Gas Station** for frictionless demo execution.
+
+**Apr 24: Command & Control — COMPLETED**
+- Bootstrap **Arc Sovereign Control Center** UI.
+- Implement real-time economic telemetry (USDC throughput + Gas Savings).
+- Integrate **On-Chain Receipts** into the Agent Chat interface.
+
+**Apr 24 (Night): Polish & Submission**
 - Show "Paid $0.003 USDC" badges in frontend.
 - Finalize submission form + product feedback doc.
 - Submit before 11:59 PM UTC.

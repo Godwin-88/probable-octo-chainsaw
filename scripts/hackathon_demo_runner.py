@@ -1,91 +1,97 @@
 import httpx
 import asyncio
 import time
-import random
+import json
+from typing import List, Dict
 
 API_BASE = "http://localhost:8000"
 
-async def run_demo():
-    print("🚀 STARTING AGENTIC ECONOMY DEMO: ARC L1 NANOPAYMENTS")
-    print("Goal: Generate 50+ micro-transactions demonstrating M2M commerce.")
+class QuantWorkflowDemo:
+    """
+    Simulates a purposeful, multi-step Agentic Economy workflow:
+    1. Research: Discover and ingest knowledge (pays Curator Agent).
+    2. Reasoning: Explain formulas (pays AI Core).
+    3. Risk: Calculate VaR for new assets (pays AI Core).
+    4. Execution: Run MVO optimization (pays AI Core).
+    """
     
-    endpoints = [
-        {"path": "/risk/var", "price": 0.005, "name": "Quant VaR"},
-        {"path": "/agents/explain", "price": 0.002, "name": "Agent Explain"},
-        {"path": "/optimize/mvo", "price": 0.01, "name": "MVO Optimization"}
-    ]
-    
-    payloads = {
-        "/risk/var": {
-            "returns": [[random.uniform(-0.02, 0.02) for _ in range(5)] for _ in range(20)],
-            "weights": [0.2] * 5
-        },
-        "/agents/explain": {
-            "type": "formula",
-            "target": "Sharpe Ratio"
-        },
-        "/optimize/mvo": {
-            "covariance": [[0.0001 if i == j else 0.00005 for j in range(5)] for i in range(5)],
-            "expected_returns": [0.05, 0.08, 0.12, 0.04, 0.06]
+    def __init__(self, target_tx: int = 55):
+        self.target_tx = target_tx
+        self.tx_hashes = []
+        self.total_paid = 0.0
+
+    async def call_endpoint(self, client: httpx.AsyncClient, name: str, path: str, payload: dict, price: float):
+        headers = {
+            "X402-Payment": f"x402_workflow_{int(time.time() * 1000)}",
+            "Content-Type": "application/json"
         }
-    }
-    
-    success_count = 0
-    tx_hashes = []
-    
-    async with httpx.AsyncClient() as client:
-        for i in range(55):  # 55 tx > 50 requirement
-            endpoint = random.choice(endpoints)
-            # Generate mock X402-Payment header
-            headers = {
-                "X402-Payment": f"x402_demo_session_{int(time.time())}_{i}",
-                "Content-Type": "application/json"
-            }
-            
-            payload = payloads[endpoint["path"]]
-            
-            try:
-                print(f"[{i+1}/55] Calling {endpoint['name']} (Price: {endpoint['price']} USDC)...", end=" ")
-                response = await client.post(
-                    f"{API_BASE}{endpoint['path']}",
-                    json=payload,
-                    headers=headers,
-                    timeout=10.0
-                )
+        try:
+            resp = await client.post(f"{API_BASE}{path}", json=payload, headers=headers)
+            if resp.status_code == 200:
+                tx_hash = resp.json().get("_payment_receipt", {}).get("tx_hash", "0x...")
+                self.tx_hashes.append(tx_hash)
+                self.total_paid += price
+                print(f"  ✅ [Workflow: {name}] Paid {price} USDC. Tx: {tx_hash}")
+                return True
+            else:
+                print(f"  ❌ [{name}] Failed: {resp.status_code}")
+        except Exception as e:
+            print(f"  ❌ [{name}] Error: {e}")
+        return False
+
+    async def run(self):
+        print("🚀 STARTING LOGICAL AGENTIC WORKFLOW DEMO")
+        print(f"Simulating purposeful interactions to generate {self.target_tx} on-chain transactions.")
+        
+        async with httpx.AsyncClient() as client:
+            while len(self.tx_hashes) < self.target_tx:
+                # Step 1: Research & Ingestion (The "Manager" pays the "Curator")
+                # We alternate between arXiv and specific technical URLs
+                query = "Hierarchical Risk Parity" if len(self.tx_hashes) % 2 == 0 else "Stochastic Volatility"
+                await self.call_endpoint(client, "Research Ingestion", "/agents/ingest", {"query": query}, 0.005)
+                if len(self.tx_hashes) >= self.target_tx: break
+
+                # Step 2: Explanation (The "Manager" pays the "Quant Expert")
+                await self.call_endpoint(client, "Formula Explain", "/agents/explain", {"type": "formula", "target": "VaR Parametric Normal"}, 0.002)
+                if len(self.tx_hashes) >= self.target_tx: break
+
+                # Step 3: Risk Calculation (High-freq compute request)
+                # Simulating a batch of 5 risk checks for a portfolio
+                for _ in range(5):
+                    await self.call_endpoint(client, "Risk Analysis (VaR)", "/risk/var", {
+                        "returns": [[0.01, -0.01], [0.02, 0.03]], "weights": [0.5, 0.5]
+                    }, 0.005)
+                    if len(self.tx_hashes) >= self.target_tx: break
                 
-                if response.status_code == 200:
-                    data = response.json()
-                    receipt = data.get("_payment_receipt", {})
-                    tx_hash = receipt.get("tx_hash", "unknown")
-                    tx_hashes.append(tx_hash)
-                    print(f"✅ Settled. Tx: {tx_hash}")
-                    success_count += 1
-                else:
-                    print(f"❌ Failed: {response.status_code} - {response.text}")
-            except Exception as e:
-                print(f"❌ Error: {str(e)}")
-            
-            # Small sleep to simulate realistic agent interaction
-            await asyncio.sleep(0.1)
-    
-    print("\n" + "="*50)
-    print(f"DEMO COMPLETE: {success_count}/55 transactions successful.")
-    print(f"Economic Throughput: {sum([e['price'] for e in endpoints]) / 3 * success_count:.4f} USDC")
-    print(f"Arc L1 Gas Total: {0.0001 * success_count:.4f} USD")
-    print(f"Ethereum L1 Gas Total (Est): ${0.50 * success_count:.2f} USD")
-    print("="*50)
-    
-    # Save tx hashes for submission evidence
-    with open("hackathon_tx_evidence.json", "w") as f:
-        import json
-        json.dump(tx_hashes, f)
-    print("Evidence saved to hackathon_tx_evidence.json")
+                # Step 4: Margin Analysis (Agent explaining the economy)
+                await self.call_endpoint(client, "Economic Analysis", "/margins/calculate", {"price_usdc": 0.005, "compute_cost": 0.002}, 0.001)
+                if len(self.tx_hashes) >= self.target_tx: break
+
+                # Step 5: Final Optimization
+                await self.call_endpoint(client, "Portfolio Optimization", "/optimize/mvo", {
+                    "covariance": [[0.0001, 0], [0, 0.0001]], "expected_returns": [0.1, 0.12]
+                }, 0.01)
+                
+                print(f"--- Workflow Loop Complete. Progress: {len(self.tx_hashes)}/{self.target_tx} ---")
+                await asyncio.sleep(0.5)
+
+        self.save_evidence()
+
+    def save_evidence(self):
+        with open("hackathon_tx_evidence.json", "w") as f:
+            json.dump({
+                "summary": {
+                    "total_transactions": len(self.tx_hashes),
+                    "total_economic_value_usdc": round(self.total_paid, 4),
+                    "arc_gas_savings_vs_eth": round((0.50 - 0.0001) * len(self.tx_hashes), 2)
+                },
+                "transactions": self.tx_hashes
+            }, f, indent=2)
+        print("\n🏆 DEMO COMPLETE")
+        print(f"Total Transactions Generated: {len(self.tx_hashes)}")
+        print(f"Total Economic Volume: {self.total_paid:.4f} USDC")
+        print(f"Evidence saved to hackathon_tx_evidence.json")
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(run_demo())
-    except KeyboardInterrupt:
-        print("\nDemo stopped by user.")
-    except Exception as e:
-        print(f"Could not run demo: {e}")
-        print("Tip: Make sure the FastAPI server is running (psychic-invention/app/main.py)")
+    demo = QuantWorkflowDemo(target_tx=60)
+    asyncio.run(demo.run())

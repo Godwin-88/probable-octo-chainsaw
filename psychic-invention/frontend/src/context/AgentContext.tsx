@@ -27,6 +27,11 @@ export interface Message {
   content: string;
   timestamp?: number;
   sources?: Array<{ id?: string; title?: string; type?: string }>;
+  onChainReceipt?: {
+    txHash: string;
+    price: number;
+    sponsored: boolean;
+  };
 }
 
 // ── localStorage helpers ──────────────────────────────────────────────────────

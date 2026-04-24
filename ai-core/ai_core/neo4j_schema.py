@@ -67,7 +67,6 @@ def init_transact_schema(driver) -> None:
             "CREATE CONSTRAINT knowledge_source_id IF NOT EXISTS FOR (k:KnowledgeSource) REQUIRE k.id IS UNIQUE",
             # ERC-8004 Agent Reputation schema
             "CREATE CONSTRAINT agent_did IF NOT EXISTS FOR (a:Agent) REQUIRE a.did IS UNIQUE",
-            "CREATE CONSTRAINT research_paper_id IF NOT EXISTS FOR (r:ResearchPaper) REQUIRE r.id IS UNIQUE",
         ]
         for cypher in constraints:
             try:
@@ -84,8 +83,8 @@ def init_transact_schema(driver) -> None:
             "CREATE INDEX idx_trading_strategy_category IF NOT EXISTS FOR (s:TradingStrategy) ON (s.category)",
             "CREATE INDEX idx_knowledge_source_domain IF NOT EXISTS FOR (k:KnowledgeSource) ON (k.domain)",
             "CREATE INDEX idx_knowledge_source_category IF NOT EXISTS FOR (k:KnowledgeSource) ON (k.category)",
+            "CREATE INDEX idx_knowledge_source_type IF NOT EXISTS FOR (k:KnowledgeSource) ON (k.type)",
             "CREATE INDEX idx_agent_reputation IF NOT EXISTS FOR (a:Agent) ON (a.reputation_score)",
-            "CREATE INDEX idx_research_paper_citations IF NOT EXISTS FOR (r:ResearchPaper) ON (r.citations)",
         ]
         for cypher in indexes:
             try:
@@ -173,29 +172,38 @@ def seed_minimal(driver) -> None:
 
 
 def seed_agent_reputation(driver) -> None:
-    """Seed agents and research papers for ERC-8004 reputation demo."""
+    """Seed agents and knowledge sources for ERC-8004 reputation demo."""
     with driver.session() as session:
-        # Research Papers
+        # Knowledge Sources (Research Papers)
         session.run("""
-            MERGE (r:ResearchPaper {id: 'paper_001'})
-            SET r.title = 'Attention is All You Need', r.citations = 120000, r.year = 2017
+            MERGE (k:KnowledgeSource {id: 'paper_001'})
+            SET k.title = 'Attention is All You Need', k.citations = 120000, k.year = 2017, k.type = 'research_paper'
         """)
         session.run("""
-            MERGE (r:ResearchPaper {id: 'paper_002'})
-            SET r.title = 'Deep Reinforcement Learning for Trading', r.citations = 500, r.year = 2021
+            MERGE (k:KnowledgeSource {id: 'paper_002'})
+            SET k.title = 'Deep Reinforcement Learning for Trading', k.citations = 500, k.year = 2021, k.type = 'research_paper'
         """)
         
         # Agents
         session.run("""
             MERGE (a:Agent {did: 'did:arc:agent_quant_nova'})
-            SET a.name = 'QuantiNova Manager', a.signal_accuracy = 0.85, a.uptime_ratio = 0.99, a.citations = 120500
+            SET a.name = 'QuantiNova Manager', a.signal_accuracy = 0.85, a.uptime_ratio = 0.99, 
+                a.citations = 120500, a.walletId = 'wallet_arc_manager_001',
+                a.walletAddress = '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'
         """)
         
-        # Link Agent to Research Papers and calculate Reputation Score
+        session.run("""
+            MERGE (a:Agent {did: 'did:arc:agent_research_specialist'})
+            SET a.name = 'Research Agent', a.signal_accuracy = 0.92, a.uptime_ratio = 0.995, 
+                a.citations = 120500, a.walletId = 'wallet_arc_curator_002',
+                a.walletAddress = '0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199'
+        """)
+        
+        # Link Agent to Knowledge Sources and calculate Reputation Score
         session.run("""
             MATCH (a:Agent {did: 'did:arc:agent_quant_nova'})
-            MATCH (r:ResearchPaper)
-            MERGE (a)-[:CITES]->(r)
+            MATCH (k:KnowledgeSource) WHERE k.type = 'research_paper'
+            MERGE (a)-[:CITES]->(k)
             WITH a
             SET a.reputation_score = 
                 0.4 * a.signal_accuracy + 

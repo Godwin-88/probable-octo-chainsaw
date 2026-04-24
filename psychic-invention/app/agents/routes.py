@@ -165,6 +165,12 @@ class FeedbackRequest(BaseModel):
     context_target: Optional[str] = None   # name of the formula/concept/metric if known
 
 
+class IngestRequest(BaseModel):
+    query: Optional[str] = None
+    url: Optional[str] = None
+    agent_did: Optional[str] = "did:arc:agent_research_specialist"
+
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def _agent_unavailable_detail(e: Exception) -> str:
@@ -366,6 +372,36 @@ async def agents_explain(request: Request, body: ExplainRequest):
     except Exception as e:
         logger.exception("Agent explain failed")
         raise HTTPException(status_code=503, detail=_agent_unavailable_detail(e))
+
+
+@router.post("/ingest")
+@require_micro_payment(endpoint_name="dynamic_ingest", price_usdc=0.005)
+async def agents_ingest(request: Request, body: IngestRequest):
+    """
+    Dynamic Ingestion: Search arXiv or a specific URL and ingest into the Knowledge Graph.
+    Prioritizes deep PDF parsing for technical/academic sources.
+    This action contributes to the agent's trust score (ERC-8004).
+    """
+    _check_rate_limit(request)
+    if not body.query and not body.url:
+        raise HTTPException(status_code=400, detail="Query or URL required for ingestion")
+
+    try:
+        from ai_core.orchestrator.curator_agent import curator_agent
+        if body.url:
+            result = await curator_agent.ingest_from_url(body.url, body.agent_did)
+        else:
+            result = await curator_agent.ingest_from_arxiv(body.query, body.agent_did)
+
+        if result.get("status") == "error":
+            raise HTTPException(status_code=404, detail=result.get("message"))
+        return result
+    except ImportError as e:
+        logger.error(f"Module import failed: {e}")
+        raise HTTPException(status_code=501, detail="CuratorAgent or dependencies not available")
+    except Exception as e:
+        logger.exception("Ingestion failed")
+        raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
 
 
 @router.post("/feedback")

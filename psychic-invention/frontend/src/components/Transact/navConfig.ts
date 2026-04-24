@@ -147,4 +147,10 @@ export const menuItems: MenuItem[] = [
       { id: 'execute',   label: 'Execute',   path: '/transact/defi/execute' },
     ],
   },
+  {
+    id: 'admin',
+    icon: '🛡️',
+    label: 'Arc Control Center',
+    path: '/transact/admin',
+  },
 ];
