@@ -11,7 +11,7 @@ import os
 def get_driver():
     uri = os.environ.get("NEO4J_URI", "bolt://localhost:7687")
     user = os.environ.get("NEO4J_USER", "neo4j")
-    password = os.environ.get("NEO4J_PASSWORD", "yield-agent-dev")
+    password = os.environ.get("NEO4J_PASSWORD", "pricing-engine-kb")
     return GraphDatabase.driver(uri, auth=(user, password))
 
 
@@ -65,6 +65,9 @@ def init_transact_schema(driver) -> None:
             "CREATE CONSTRAINT defi_protocol_name IF NOT EXISTS FOR (p:DeFiProtocol) REQUIRE p.name IS UNIQUE",
             "CREATE CONSTRAINT trading_strategy_name IF NOT EXISTS FOR (s:TradingStrategy) REQUIRE s.name IS UNIQUE",
             "CREATE CONSTRAINT knowledge_source_id IF NOT EXISTS FOR (k:KnowledgeSource) REQUIRE k.id IS UNIQUE",
+            # ERC-8004 Agent Reputation schema
+            "CREATE CONSTRAINT agent_did IF NOT EXISTS FOR (a:Agent) REQUIRE a.did IS UNIQUE",
+            "CREATE CONSTRAINT research_paper_id IF NOT EXISTS FOR (r:ResearchPaper) REQUIRE r.id IS UNIQUE",
         ]
         for cypher in constraints:
             try:
@@ -81,6 +84,8 @@ def init_transact_schema(driver) -> None:
             "CREATE INDEX idx_trading_strategy_category IF NOT EXISTS FOR (s:TradingStrategy) ON (s.category)",
             "CREATE INDEX idx_knowledge_source_domain IF NOT EXISTS FOR (k:KnowledgeSource) ON (k.domain)",
             "CREATE INDEX idx_knowledge_source_category IF NOT EXISTS FOR (k:KnowledgeSource) ON (k.category)",
+            "CREATE INDEX idx_agent_reputation IF NOT EXISTS FOR (a:Agent) ON (a.reputation_score)",
+            "CREATE INDEX idx_research_paper_citations IF NOT EXISTS FOR (r:ResearchPaper) ON (r.citations)",
         ]
         for cypher in indexes:
             try:
@@ -102,6 +107,10 @@ def seed_minimal(driver) -> None:
             MERGE (c:Chain {id: 'sepolia'})
             SET c.name = 'Sepolia', c.type = 'EVM', c.chainId = '11155111', c.updatedAt = datetime()
         """)
+        session.run("""
+            MERGE (c:Chain {id: 'arc-testnet'})
+            SET c.name = 'Arc Testnet', c.type = 'EVM', c.chainId = '11155111', c.updatedAt = datetime()
+        """)
         # Protocol
         session.run("""
             MERGE (p:Protocol {id: 'aave-v3-ethereum'})
@@ -117,6 +126,11 @@ def seed_minimal(driver) -> None:
         session.run("""
             MERGE (a:Asset {id: 'usdc-ethereum'})
             SET a.symbol = 'USDC', a.chainId = 'ethereum', a.decimals = 6,
+                a.isStablecoin = true, a.updatedAt = datetime()
+        """)
+        session.run("""
+            MERGE (a:Asset {id: 'usdc-arc-testnet'})
+            SET a.symbol = 'USDC', a.chainId = 'arc-testnet', a.decimals = 6,
                 a.isStablecoin = true, a.updatedAt = datetime()
         """)
         # Opportunity
@@ -149,8 +163,44 @@ def seed_minimal(driver) -> None:
             MERGE (a)-[:ON_CHAIN]->(c)
         """)
         session.run("""
+            MATCH (c:Chain {id: 'arc-testnet'}), (a:Asset) WHERE a.chainId = 'arc-testnet'
+            MERGE (a)-[:ON_CHAIN]->(c)
+        """)
+        session.run("""
             MATCH (c:Chain {id: 'ethereum'}), (o:Opportunity {id: 'aave-usdt-supply-ethereum'})
             MERGE (o)-[:ON_CHAIN]->(c)
+        """)
+
+
+def seed_agent_reputation(driver) -> None:
+    """Seed agents and research papers for ERC-8004 reputation demo."""
+    with driver.session() as session:
+        # Research Papers
+        session.run("""
+            MERGE (r:ResearchPaper {id: 'paper_001'})
+            SET r.title = 'Attention is All You Need', r.citations = 120000, r.year = 2017
+        """)
+        session.run("""
+            MERGE (r:ResearchPaper {id: 'paper_002'})
+            SET r.title = 'Deep Reinforcement Learning for Trading', r.citations = 500, r.year = 2021
+        """)
+        
+        # Agents
+        session.run("""
+            MERGE (a:Agent {did: 'did:arc:agent_quant_nova'})
+            SET a.name = 'QuantiNova Manager', a.signal_accuracy = 0.85, a.uptime_ratio = 0.99, a.citations = 120500
+        """)
+        
+        # Link Agent to Research Papers and calculate Reputation Score
+        session.run("""
+            MATCH (a:Agent {did: 'did:arc:agent_quant_nova'})
+            MATCH (r:ResearchPaper)
+            MERGE (a)-[:CITES]->(r)
+            WITH a
+            SET a.reputation_score = 
+                0.4 * a.signal_accuracy + 
+                0.3 * log(a.citations + 1) / 12.0 + 
+                0.3 * a.uptime_ratio
         """)
 
 
@@ -161,6 +211,7 @@ def init_and_seed() -> None:
         init_schema(driver)
         init_transact_schema(driver)
         seed_minimal(driver)
+        seed_agent_reputation(driver)
         print("Neo4j schema and seed data applied.")
     finally:
         driver.close()

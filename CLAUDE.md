@@ -12,9 +12,9 @@
 |-------|------|------|
 | Frontend | React + TypeScript | 5173 |
 | Gateway | Node.js/Express + WDK (`@tetherto/wdk`) | 3000 |
-| MCP Server | TypeScript (JSON-RPC 2.0, 7 tools) | 3001 |
+| MCP Server | TypeScript (JSON-RPC 2.0, 9 tools) | 3001 |
 | AI Core | Python gRPC + FastAPI (TRANSACT) | 50051 / 8000 |
-| Agent Orchestrator | OpenClaw (external) | 18789 |
+| Agent Orchestrator | LangGraph Trading Harness | 8001 |
 | Knowledge Graph | Neo4j | 7475 (browser) / 7688 (bolt) |
 | Cache | Redis | 6379 |
 
@@ -42,9 +42,9 @@
 │   ├── App.tsx
 │   └── api/agent.ts
 ├── proto/                optimize.proto (gRPC contract)
-├── deploy/               docker-compose.yml, Dockerfiles, openclaw-config/
+├── deploy/               docker-compose.yml, Dockerfiles
 ├── docs/                 SETUP.md, API_V2.md, DECISION_FLOW.md,
-│                          OPENCLAW_INTEGRATION.md, WDK_INTEGRATION.md
+│                          LANGGRAPH_ORCHESTRATOR.md, WDK_INTEGRATION.md
 ├── AlgorithmicTradingStrategies/   Source PDFs → Neo4j KG (via pdf_ingest)
 ├── psychic-invention/    TRANSACT platform (submodule / separate repo)
 └── .env.example          Canonical env var reference
@@ -70,9 +70,8 @@ REDIS_URL=redis://redis:6379             # from Docker
 RPC_URL_ETHEREUM=https://eth.llamarpc.com
 RPC_URL_POLYGON=https://polygon-rpc.com
 
-# OpenClaw (agent chat proxy) — optional but needed for /api/agent/chat
-OPENCLAW_GATEWAY_URL=http://localhost:18789
-OPENCLAW_TOKEN=
+# LangGraph Orchestrator
+ORCHESTRATOR_PORT=8001
 
 # TRANSACT (REQUIRED for quant features and MCP tools)
 TRANSACT_API_URL=http://localhost:8000   # or http://host.docker.internal:8000 from Docker
@@ -126,16 +125,17 @@ Environment → PERCEPTION → BRAIN (LLM) → ACTION
 |----------|------------------------------|
 | Autonomy | `/v2/agent/toggle` persists autonomous mode in Redis |
 | Reactivity | WebSocket feeds: positions, opportunities, agent status |
-| Pro-activeness | Optimization loop: portfolio → plan → sign → broadcast |
-| Social ability | OpenClaw ↔ MCP server ↔ Gateway communication |
+| Pro-activeness | LangGraph loop: fetch → analyze → decide → execute |
+| Social ability | Orchestrator ↔ AI Core ↔ Gateway communication |
 
-### Planning Pattern — Always Use Decomposition-First for Optimization
-1. Fetch portfolio state (WDK read-only)
-2. Query Neo4j KG for yield opportunities + formula explanations
-3. Call TRANSACT for VaR/moments enrichment
-4. Return `optimizationId` immediately (non-blocking)
-5. Stream progress via WebSocket (`/ws/progress?optimizationId=`)
-6. Present signed action plan — user signs, gateway broadcasts
+### Planning Pattern — LangGraph State Machine
+1. **fetch_portfolio**: WDK read-only via gateway
+2. **analyze_market**: OHLCV + feature engineering
+3. **graphrag_retrieve**: Neo4j KG (quant formulas) + web scrapers
+4. **rl_decide**: Deep RL (PPO) decision [-1, 1]
+5. **validate_risk**: Risk check against Neo4j parameters
+6. **execute_trade**: Submit to Kraken via gateway
+7. **record_outcome**: Log signal + reward to Neo4j
 
 ### Memory Architecture
 | Memory Type | Storage | TTL |
@@ -232,32 +232,29 @@ session.run("UNWIND $rows AS r MATCH (n) WHERE id(n)=r.id SET n.pagerank=r.score
 
 ## 7. Multi-Agent System Rules (from `multiagentsystems.mdc`)
 
-### Agent Topology for This Stack
+### Agent Topology
 ```
-OpenClaw (Orchestrator)
-    │  MCP JSON-RPC 2.0
+LangGraph Orchestrator (port 8001)
+    │  HTTP / gRPC
     ▼
-MCP Server (yield-agent-mcp, port 3001)
-    │  7 tools: get_portfolio, run_optimization, get_optimization_plan,
-    │            broadcast_signed_tx, quant_var, quant_moments, explain_formula
-    ▼
-Gateway (port 3000)          AI Core / TRANSACT (port 8000)
-    │  REST /api, /v2              │  gRPC :50051 + FastAPI HTTP
-    ▼                              ▼
-WDK (read-only)            Neo4j + VaR/Moments/Monte Carlo
+AI Core / TRANSACT (port 8000)      Gateway (port 3000)
+    │  Neo4j GraphRAG                  │  WDK Execution
+    │  Deep RL Policy                  │  Market Data
+    ▼                                  ▼
+Neo4j (port 7688)               Kraken / Chains
 ```
 
 ### MCP Tool Implementation Rules
 - Every tool must return `{ content: [{ type: "text", text: JSON.stringify(result) }], isError: false }` on success.
 - On failure: `{ content: [{ type: "text", text: JSON.stringify({ error: msg }) }], isError: true }`.
 - No tool may mutate state without explicit user consent (`broadcast_signed_tx` requires `signedTxHex` from user — the user already signed client-side).
-- Tool names are **snake_case** — never change them without updating OpenClaw agent configuration.
+- Tool names are **snake_case** — never change them without updating orchestrator logic.
 - Tool input schemas must be JSON Schema draft-07 compatible.
 
 ### Inter-Agent Message Schema
 ```typescript
 interface AgentMessage {
-  sender: string;            // e.g. "openclaw", "mcp-server"
+  sender: string;            // e.g. "orchestrator", "mcp-server"
   recipient: string;
   task_id: string;           // UUID
   message_type: "tool_call" | "tool_result" | "error";
@@ -325,7 +322,7 @@ Query (formula name / asset / protocol)
 ### Prompt Engineering Conventions
 - Always use **Chain-of-Thought** for optimization decisions: "Analyse the portfolio, identify risk, then generate actions step by step."
 - Use **ReAct** pattern when agent must query tools iteratively (portfolio → VaR → opportunities → plan).
-- For OpenClaw system prompts: explicitly list available MCP tools and their input schemas.
+- For orchestrator system prompts: explicitly list available tools and their input schemas.
 - **Never** interpolate raw user input into Cypher or SQL — always parameterise.
 - System prompts must include: role, available tools, output format, safety guardrails (no signing on behalf of user).
 
@@ -529,7 +526,7 @@ python -m ai_core.pdf_ingest --dir ../AlgorithmicTradingStrategies --neo4j-uri b
 - **Do not** hard-code token addresses or chain IDs — use `gateway-wdk/src/lib/chains.ts` registry.
 - **Do not** block the Node.js event loop — all DB calls must be async.
 - **Do not** return raw Neo4j internal node IDs to clients — use `elementId()` or business-key properties.
-- **Do not** add new MCP tools without updating OpenClaw agent config in `deploy/openclaw-config/`.
+- **Do not** add new MCP tools without updating orchestrator logic if they require the tool.
 - **Do not** change `proto/optimize.proto` without regenerating both Python and TypeScript stubs.
 - **Do not** use `GNN` model inference inline in gateway routes — delegate to AI Core HTTP endpoints.
 - **Do not** skip structured logging on new routes or agent calls.
@@ -549,11 +546,10 @@ python -m ai_core.pdf_ingest --dir ../AlgorithmicTradingStrategies --neo4j-uri b
 | [ai-core/ai_core/neo4j_schema.py](ai-core/ai_core/neo4j_schema.py) | Neo4j node/rel schema definitions |
 | [ai-core/ai_core/transact_client.py](ai-core/ai_core/transact_client.py) | TRANSACT HTTP client (VaR, moments, explain) |
 | [ai-core/ai_core/server.py](ai-core/ai_core/server.py) | FastAPI app + gRPC server entrypoint |
-| [mcp-server-yield-agent/src/](mcp-server-yield-agent/src/) | 7 MCP tools implementation |
+| [ai-core/ai_core/orchestrator/](ai-core/ai_core/orchestrator/) | LangGraph Orchestrator logic |
 | [deploy/docker-compose.yml](deploy/docker-compose.yml) | Canonical full-stack compose |
-| [deploy/openclaw-config/](deploy/openclaw-config/) | OpenClaw agent + MCP tool config |
 | [proto/optimize.proto](proto/optimize.proto) | gRPC contract (source of truth) |
-| [docs/OPENCLAW_INTEGRATION.md](docs/OPENCLAW_INTEGRATION.md) | OpenClaw setup guide |
+| [docs/LANGGRAPH_ORCHESTRATOR.md](docs/LANGGRAPH_ORCHESTRATOR.md) | LangGraph architecture guide |
 | [docs/SETUP.md](docs/SETUP.md) | Full dev environment setup |
 | [docs/API_V2.md](docs/API_V2.md) | /v2 endpoint reference |
 | [.env.example](.env.example) | All env vars with comments |

@@ -576,7 +576,7 @@ export const MENU_ITEMS: MenuItem[] = [
       { name: 'Chain Registry', desc: 'Uses /v2/chains to list supported chains, their ids, and configuration status so that both the agent and UI can present only viable deployment targets.', icon: '🧭' },
       { name: 'Token & Price Snapshot', desc: 'Calls /v2/universe/snapshot with chain and asset filters to build a canonical view of the token universe and reference prices used for P&L, risk, and optimisation.', icon: '🪙' },
       { name: 'Positions Overlay', desc: 'When a wallet or agent id is available, extends the snapshot with positions so that risk, optimiser, and scenarios work on a live holdings view.', icon: '📈' },
-      { name: 'Agent & Workspace Bridge', desc: 'Provides a shared data layer for the Dynamic Yield Optimization Agent, OpenClaw tools, and frontend workspaces so that all components agree on inputs.', icon: '🧬' },
+      { name: 'Agent & Workspace Bridge', desc: 'Provides a shared data layer for the Dynamic Yield Optimization Agent, LangGraph Orchestrator, and frontend workspaces so that all components agree on inputs.', icon: '🧬' },
     ],
     significance: [
       { title: 'Single source of truth for multi-chain data', body: 'Without a unified data layer, yield agents and analytics drift apart. The Data Universe ensures that every optimisation, risk calculation, and scenario uses the same token and price inputs.' },

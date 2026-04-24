@@ -9,11 +9,7 @@ try:
     import pricing_engine
     HAS_PRICING = True
 except ImportError:
-    try:
-        import pricing_engine_mock as pricing_engine
-        HAS_PRICING = True
-    except ImportError:
-        HAS_PRICING = False
+    HAS_PRICING = False
 
 
 @dataclass

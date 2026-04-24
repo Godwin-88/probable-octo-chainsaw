@@ -107,7 +107,7 @@ sequenceDiagram
 | GET | /ws/progress?optimizationId=... | WebSocket stream of optimization progress. |
 | GET | /api/execute/plan/:optimizationId | Cached optimization plan. |
 | POST | /api/execute/signed | Body: `signedTxHex`. Broadcasts tx (non-custodial). |
-| POST | /api/agent/chat | Body: `message`, optional `sessionId`. Proxies to OpenClaw when `OPENCLAW_GATEWAY_URL` is set. |
+| POST | /api/agent/chat | **(DEPRECATED)** Body: `message`, optional `sessionId`. Proxy to OpenClaw. |
 
 ### Web3-native v2 API (gateway)
 
@@ -125,6 +125,8 @@ sequenceDiagram
 | GET | /v2/activity?wallet=... | Tx audit trail (Redis-backed; includes explorer links). |
 | POST | /v2/agent/toggle | Persist agent autonomy state in Redis (UI toggle sync + future enforcement hook). |
 
-## OpenClaw and WDK
+## LangGraph and WDK
 
-When using **OpenClaw** for agent orchestration (recommended by the hackathon), the agent uses the **Tether WDK skill** for wallet and transaction semantics and the **Yield-Agent MCP** tools for portfolio and optimization. The MCP server calls the same gateway APIs (portfolio, optimize, execute/plan, execute/signed) described above. Execution remains non-custodial: the agent suggests actions and the user signs in their wallet; the gateway only broadcasts. See [docs/OPENCLAW_INTEGRATION.md](OPENCLAW_INTEGRATION.md) for setup and config.
+The **LangGraph Trading Orchestrator** uses the same WDK-backed gateway APIs for non-custodial execution. It replaces the deprecated OpenClaw orchestration. See [docs/LANGGRAPH_ORCHESTRATOR.md](LANGGRAPH_ORCHESTRATOR.md) for setup and architecture.
+
+When using agentic orchestration, the agent uses the **Tether WDK skill** for wallet and transaction semantics and the **Yield-Agent MCP** tools for portfolio and optimization. Execution remains non-custodial: the agent suggests actions and the user signs in their wallet; the gateway only broadcasts.

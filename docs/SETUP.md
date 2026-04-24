@@ -10,7 +10,7 @@ This guide covers one-command Docker setup, all environment variables, local dev
 2. [One-Command Docker Run](#one-command-docker-run-recommended)
 3. [Service Endpoints](#service-endpoints)
 4. [Environment Variables](#environment-variables)
-5. [OpenClaw and MCP](#openclaw-and-mcp)
+5. [LangGraph Orchestrator](#langgraph-orchestrator)
 6. [TRANSACT Integration](#transact-integration-mandatory)
 7. [Local Development (Without Docker)](#local-development-without-docker)
 8. [Knowledge-Graph Ingestion (PDF → Cypher)](#knowledge-graph-ingestion-pdf--cypher)
@@ -47,7 +47,7 @@ flowchart LR
     Gateway[gateway-wdk_3000]
     AICore[ai-core_50051_8000]
     MCP[yield-agent-mcp_3001]
-    OpenClaw[openclaw_18789]
+    Orchestrator[orchestrator_8001]
     Frontend[frontend_5173]
     Indexer[indexer]
     GraphSeeder[graph-seeder_exits_after_seed]
@@ -60,7 +60,9 @@ flowchart LR
   Neo4j --> GraphSeeder
   AICore --> Gateway
   Gateway --> MCP
-  MCP --> OpenClaw
+  Gateway --> Orchestrator
+  Orchestrator --> AICore
+  Orchestrator --> Neo4j
   Gateway --> Frontend
 ```
 
@@ -72,7 +74,7 @@ flowchart LR
 |---------|-----------|---------|
 | **Frontend** | 5173 | React/Vite TRANSACT app (DeFi yield + quant workspaces) |
 | **Gateway** | 3000 | REST API + WebSocket (`ws://localhost:3000/ws/progress`) |
-| **OpenClaw Control UI** | 18789 | Agent orchestration UI; uses Yield-Agent MCP tools |
+| **Orchestrator** | 8001 | LangGraph Agentic Trading API; GraphRAG + Deep RL |
 | **Yield-Agent MCP** | 3001 | MCP server (9 tools: portfolio, optimize, plan, broadcast, VaR, moments, formula, concept, strategy) |
 | **AI Core gRPC** | 50051 | Internal; gateway connects to `ai-core:50051` for optimization |
 | **AI Core HTTP (TRANSACT)** | 8000 | Quant REST API (`/risk/var`, `/portfolio/moments`, `/agents/explain`, etc.) |
@@ -85,7 +87,7 @@ flowchart LR
 1. **Neo4j**: http://localhost:7475 — log in with `neo4j` / `yield-agent-dev` (or your `NEO4J_PASSWORD`)
 2. **Gateway**: `curl http://localhost:3000/health` → `{"status":"ok","service":"gateway-wdk"}`
 3. **MCP server**: `curl http://localhost:3001/health` → `{"status":"ok","service":"yield-agent-mcp"}`
-4. **OpenClaw**: http://localhost:18789 — configure Yield-Agent MCP at `http://yield-agent-mcp:3001`
+4. **Orchestrator**: `curl http://localhost:8001/health` → `{"status":"healthy","architecture":"LangGraph + GraphRAG + Deep RL (PPO)"}`
 5. **Frontend**: http://localhost:5173 — DeFi / Yield tab for portfolio, optimize, plan
 
 ---
@@ -134,8 +136,7 @@ RPC_URL_SEPOLIA=https://rpc.sepolia.org
 | `AI_CORE_HTTP_URL` | `http://ai-core:8000` | Gateway proxies `/api/transact` to this. |
 | `TRANSACT_API_URL` | `http://127.0.0.1:8000` (ai-core) / `http://ai-core:8000` (MCP) | TRANSACT quant engine URL. In unified Docker container, ai-core sets this to loopback. MCP uses the service name. **Required** — both ai-core and MCP exit if unset. |
 | `GATEWAY_URL` | `http://gateway-wdk:3000` | Used by MCP server to call gateway APIs. |
-| `OPENCLAW_GATEWAY_URL` | `http://openclaw:18789` | Gateway proxies `POST /api/agent/chat` here when set. |
-| `OPENCLAW_TOKEN` | _(empty)_ | Bearer token for OpenClaw gateway (if auth is enabled). |
+| `ORCHESTRATOR_PORT` | `8001` | Port for the LangGraph Orchestrator API. |
 | `WDK_NETWORKS` | _(empty)_ | Comma-separated extra WDK networks to enable. |
 | `VITE_GATEWAY_URL` | `http://localhost:3000` | Build-time; frontend API base URL. |
 | `VITE_WS_URL` | `ws://localhost:3000` | Build-time; frontend WebSocket base URL. |
@@ -151,13 +152,13 @@ RPC_URL_SEPOLIA=https://rpc.sepolia.org
 
 ---
 
-## OpenClaw and MCP
+## LangGraph Orchestrator
 
-- **Yield-Agent MCP server** (`yield-agent-mcp` container, port 3001) exposes 9 tools for OpenClaw: `get_portfolio`, `run_optimization`, `get_optimization_plan`, `broadcast_signed_tx`, `quant_var`, `quant_moments`, `explain_formula`, `explain_concept`, `explain_strategy`.
-- **OpenClaw** (`openclaw` container, port 18789) — Control UI at **http://localhost:18789**. Configure the MCP server via the example config at `deploy/openclaw-config/openclaw.json.example` (URL `http://yield-agent-mcp:3001` from inside Docker).
-- **Agent chat in frontend**: gateway proxies `POST /api/agent/chat` to OpenClaw when `OPENCLAW_GATEWAY_URL` is set. Enable chat completions in OpenClaw if required.
+- **Orchestrator** (`orchestrator` container, port 8001) — LangGraph-based agentic trading harness. Replaces the deprecated OpenClaw orchestration.
+- **Sequential Flow**: Fetch Portfolio → Analyze Market → GraphRAG Retrieve → RL Decide → Validate Risk → Execute Trade → Record Outcome.
+- **Integration**: Orchestrator calls AI Core (port 8000) for quant reasoning and Neo4j for GraphRAG context.
 
-See [docs/OPENCLAW_INTEGRATION.md](OPENCLAW_INTEGRATION.md) for the full step-by-step OpenClaw setup guide.
+See [docs/LANGGRAPH_ORCHESTRATOR.md](LANGGRAPH_ORCHESTRATOR.md) for the full LangGraph architecture and API guide.
 
 ---
 
@@ -177,8 +178,8 @@ See [docs/OPENCLAW_INTEGRATION.md](OPENCLAW_INTEGRATION.md) for the full step-by
 | `/risk/var` | POST | VaR and Expected Shortfall |
 | `/portfolio/moments` | POST | Return, vol, skew, kurtosis |
 | `/agents/explain` | POST | Formula explanation from knowledge graph |
-| `/agents/chat` | POST | ReAct agent chat (returns reply, session_id, intent) |
-| `/agents/chat/stream` | POST | SSE streaming ReAct chat (events: intent, thinking, action, observation, final_answer, done; header: X-Session-Id) |
+| `/agents/chat` | POST | ReAct agent chat (legacy; deprecated in favor of LangGraph) |
+| `/agents/chat/stream` | POST | SSE streaming ReAct chat (legacy; deprecated in favor of LangGraph) |
 | `/agents/metrics` | GET | In-process telemetry: counters, latency histograms, GraphRAG hit rate |
 | `/agents/feedback` | POST | RLHF rating (1–5) + optional correction → Neo4j |
 | `/agents/conversations/save` | POST | Save full conversation session for DRL |
@@ -519,17 +520,11 @@ The gateway now exits immediately on startup if any of `TRANSACT_API_URL`, `NEO4
 - Use **PyMuPDF only**: `pip install pymupdf`. The script uses `import pymupdf`.
 - If you see errors from a conflicting `fitz` package: `pip uninstall fitz && pip install pymupdf`.
 
-### OpenClaw cannot reach MCP server
+### Orchestrator cannot be reached
 
-- From inside OpenClaw container: use `http://yield-agent-mcp:3001`.
-- From host: use `http://localhost:3001`.
-- Ensure `yield-agent-mcp` is healthy: `curl http://localhost:3001/health`.
-
-### Agent does not see tools in OpenClaw
-
-- Confirm MCP server is registered in OpenClaw config with the correct URL and plugin is enabled.
-- Restart OpenClaw after config changes: `docker compose -f deploy/docker-compose.yml restart openclaw`.
-- Test MCP directly: `curl -X POST http://localhost:3001/mcp -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`
+- Ensure `orchestrator` service is running: `docker compose -f deploy/docker-compose.yml ps`
+- Check logs: `docker compose -f deploy/docker-compose.yml logs orchestrator`
+- Verify `ORCHESTRATOR_PORT` matches your host mapping (default 8001).
 
 ### Non-EVM chains return empty positions
 

@@ -21,7 +21,7 @@ def _get_driver():
             raise RuntimeError("neo4j package not installed")
         uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
         user = os.getenv("NEO4J_USER", "neo4j")
-        password = os.getenv("NEO4J_PASSWORD", "yield-agent-dev")
+        password = os.getenv("NEO4J_PASSWORD", "pricing-engine-kb")
         _DRIVER = GraphDatabase.driver(uri, auth=(user, password))
     return _DRIVER
 

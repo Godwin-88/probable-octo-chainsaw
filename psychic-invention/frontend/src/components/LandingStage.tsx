@@ -126,7 +126,7 @@ export const LandingStage = () => {
                 'Tether WDK (non-custodial)',
                 'Gateway /v2 Data Universe',
                 'Neo4j DeFi Graph',
-                'OpenClaw Agent Orchestration',
+                'LangGraph Agent Orchestration',
                 'MEV-Protected Execution',
                 'Quant Workspaces (M1–M7)',
               ].map(tech => (

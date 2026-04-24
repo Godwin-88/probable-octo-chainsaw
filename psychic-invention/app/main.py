@@ -13,14 +13,9 @@ from .error_handling import (
 )
 from .health_check import get_health_report, get_basic_health, health_checker
 
-# Try to import the Rust pricing engine, fall back to mock if not available
-try:
-    import pricing_engine
-    USING_MOCK = False
-except ImportError:
-    import pricing_engine_mock as pricing_engine
-    USING_MOCK = True
-    print("Warning: Using mock pricing engine for testing")
+# Import pricing engine
+import pricing_engine
+USING_MOCK = False
 
 # Import Redis cache
 try:

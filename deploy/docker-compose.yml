@@ -53,8 +53,6 @@ services:
       RPC_URL_ETHEREUM: ${RPC_URL_ETHEREUM:-https://eth.llamarpc.com}
       RPC_URL_SEPOLIA: ${RPC_URL_SEPOLIA:-https://rpc.sepolia.org}
       WDK_NETWORKS: ${WDK_NETWORKS:-}
-      OPENCLAW_GATEWAY_URL: http://openclaw:18789
-      OPENCLAW_TOKEN: ${OPENCLAW_TOKEN:-}
     depends_on:
       redis:
         condition: service_healthy

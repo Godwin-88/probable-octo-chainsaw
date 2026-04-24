@@ -1,4 +1,7 @@
-# OpenClaw Integration Guide
+# OpenClaw Integration Guide (DEPRECATED)
+
+> **⚠️ DEPRECATION NOTICE**: OpenClaw utilization has been deprecated in favor of the **LangGraph Trading Orchestrator**. 
+> Please refer to **[docs/LANGGRAPH_ORCHESTRATOR.md](LANGGRAPH_ORCHESTRATOR.md)** for the new agentic trading harness documentation.
 
 OpenClaw is the **agent orchestration layer** for the Dynamic Yield Optimization Agent. It runs a conversational AI agent that uses the **Yield-Agent MCP server** as its tool interface and the **Tether WDK skill** for wallet semantics. The agent plans and explains every DeFi action before execution; signing stays non-custodial in the user's wallet.
 

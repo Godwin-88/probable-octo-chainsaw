@@ -36,6 +36,7 @@ from app.agents.skills import (
 )
 from app.agents.memory import get_memory
 from app.agents.react_agent import ReActAgent
+from app.middleware.payments import require_micro_payment
 from app.telemetry import (
     get_logger as _get_telem_logger,
     record_latency as _record_latency,
@@ -334,6 +335,7 @@ async def agents_chat_stream(request: Request, body: ChatRequest):
 
 
 @router.post("/explain")
+@require_micro_payment(endpoint_name="explain_formula", price_usdc=0.002)
 async def agents_explain(request: Request, body: ExplainRequest):
     """One-shot explain: formula | metric | concept."""
     _check_rate_limit(request)

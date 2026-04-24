@@ -58,66 +58,49 @@ flowchart TB
 
 1. **Request**: User clicks “Analyze & Optimize”; gateway receives wallet and constraints, returns `optimizationId`, then streams progress over WebSocket.
 2. **Data**: Gateway calls AI core via gRPC. AI core loads the subgraph around the user’s positions and candidate opportunities from Neo4j (and optionally market conditions).
-3. **Reasoning**: AI core aggregates risk/APY along relationships, runs heuristic or RL policy, and produces a list of recommended actions (e.g. “deposit USDT into Aave on Ethereum”). **TRANSACT integration is mandatory**: the AI core calls the TRANSACT API to enrich the plan with quant-level metrics (VaR, portfolio moments) for financial-engineering-grade strategies.
-4. **Explainability**: Recommendations can be tied back to graph paths; GraphRAG or vector search over the graph can produce natural-language explanations; TRANSACT provides formula and concept explanations.
-5. **Execution**: User approves in the UI; client signs with WDK (or MetaMask); gateway broadcasts via `POST /api/execute/signed`. WebSocket streams status (e.g. WAITING_FOR_SIGNATURE, BROADCASTING, DONE).
+3. **Reasoning**: AI core aggregates risk/APY along relationships, runs heuristic or RL policy, and produces a list of recommended actions. The **LangGraph Orchestrator** manages the trading lifecycle, integrating GraphRAG and Deep RL for intelligent execution.
+4. **Explainability**: Recommendations include citations from quant formulas and concepts in Neo4j; TRANSACT provides underlying financial rationale.
+5. **Execution**: User approves in the UI; client signs with WDK; gateway broadcasts via `POST /api/execute/signed`. WebSocket streams status (e.g. WAITING_FOR_SIGNATURE, BROADCASTING, DONE).
 
-## ReAct Agent Loop
+## LangGraph Trading Orchestrator
 
-The `psychic-invention/app/agents/react_agent.py` implements a Thought→Action→Observation→Answer loop (max 5 iterations) for agent chat. Intent is first classified by `router.py` (9 intents: FORMULA_EXPLAIN, CONCEPT_EXPLAIN, METRIC_INTERPRET, STRATEGY_SUGGEST, WORKSPACE_ANALYZE, DERIVATION, COMPARE, GRAPH_QUERY, GENERAL). Conversation history is maintained by `memory.py` (Redis-backed, 20-turn sliding window, 3600 s TTL, in-process fallback).
+The trading flow is managed by a **LangGraph state machine**, which provides a structured, deterministic pipeline for agentic trading. It replaces the legacy ReAct loop and OpenClaw orchestration with a sequential flow of specialized nodes.
 
 ```mermaid
-flowchart TB
-  A[User_Message] --> B[Intent_Classifier_router.py]
-  B --> C{Intent}
-  C -->|GRAPH_QUERY / FORMULA_EXPLAIN / etc.| D[GraphRAG_Retrieval]
-  C -->|GENERAL| E[LLM_Direct]
-  D --> F[ReAct_Loop_max_5_iterations]
-  E --> F
-  F --> G{Iteration}
-  G -->|Thought| H[LLM_Reasoning]
-  H -->|Action| I[Tool_Call_or_GraphRAG]
-  I -->|Observation| G
-  G -->|Answer_or_max_reached| J[Final_Answer]
-  J --> K[SSE_Stream_to_Client]
-  K --> L[done_event]
+flowchart TD
+  A[Start] --> B[fetch_portfolio]
+  B --> C[analyze_market]
+  C --> D[graphrag_retrieve]
+  D --> E[rl_decide]
+  E --> F[validate_risk]
+  F --> G{Risk Passed?}
+  G -->|Yes| H[execute_trade]
+  G -->|No| I[Reject Trade]
+  H --> J[record_outcome]
+  I --> J
+  J --> K[End]
 ```
 
-SSE events emitted on `POST /agents/chat/stream`: `intent`, `thinking`, `action`, `observation`, `final_answer`, `done`. The `X-Session-Id` response header carries the session identifier for stateful follow-up turns.
+### Orchestrator Nodes
+
+1.  **fetch_portfolio**: Retrieves user holdings and cash balance from the WDK-backed gateway.
+2.  **analyze_market**: Fetches OHLCV candles from Kraken and computes technical features (RSI, Z-Score, Momentum).
+3.  **graphrag_retrieve**: Performs two-tier retrieval:
+    - **Neo4j Subgraph**: Extracts TransactConcept, TransactFormula, and TradingStrategy nodes from the knowledge graph.
+    - **Web Scrapers**: Gathers live data from DeFiLlama (TVL), CoinGecko (prices), and Arxiv (quant papers).
+4.  **rl_decide**: A Deep RL (PPO) agent makes a positioning decision [-1, 1] based on market features and KG context.
+5.  **validate_risk**: Compares the proposed action against risk parameters (max position size, drawdown limits) stored in Neo4j.
+6.  **execute_trade**: Submits the trade to Kraken via the gateway if validated.
+7.  **record_outcome**: Creates a `Signal` node in Neo4j linking the strategy, market, and outcome for audit and future RL training.
 
 ## GraphRAG Retrieval
 
-Two-tier retrieval backs every ReAct action and direct knowledge lookup:
+Two-tier retrieval backs every orchestrator decision:
 
-- **Tier 1 — Static Neo4j subgraph**: queries TransactConcept, TransactFormula, TradingStrategy, and DeFiProtocol nodes plus `SOURCED_FROM` citations. Returns structured knowledge with PDF source references rendered as `[N]` notation in replies and `CitationBadge` components in the frontend.
-- **Tier 2 — Live web scrapers** (`ai-core/ai_core/scrapers/`): `DeFiLlamaScraper` (TVL + top yield pools, 2-min cache), `CoinGeckoScraper` (token prices + global market cap, 1-min cache), `ArxivScraper` (recent quant finance papers, 1-hr cache). All scrapers run concurrently via `ScraperScheduler` using `asyncio.gather`.
+- **Tier 1 — Static Neo4j subgraph**: queries TransactConcept, TransactFormula, TradingStrategy, and DeFiProtocol nodes plus `SOURCED_FROM` citations. Returns structured knowledge with PDF source references rendered as `[N]` notation.
+- **Tier 2 — Live web scrapers** (`ai-core/ai_core/scrapers/`): `DeFiLlamaScraper`, `CoinGeckoScraper`, `ArxivScraper`.
 
-GraphRAG hit rate is tracked in telemetry and accessible at `GET /agents/metrics`.
-
-## Agent orchestration (OpenClaw + ReActAgent)
-
-The flow can be driven in two ways:
-
-1. **ReActAgent (direct)**: `POST /agents/chat` or `POST /agents/chat/stream` on ai-core :8000. The ReActAgent classifies intent, retrieves from GraphRAG, runs the Thought/Action/Observation loop, and streams SSE events. Used by the QuantiNova `ChatWindow` component.
-
-2. **OpenClaw**: the user talks to the OpenClaw agent, which uses the **Yield-Agent MCP server** tools: `get_portfolio`, `run_optimization`, `get_optimization_plan`, `broadcast_signed_tx`, and the **mandatory** TRANSACT quant tools `quant_var`, `quant_moments`, `explain_formula`, `explain_concept`, `explain_strategy` (9 tools total). The MCP server forwards tool calls to the gateway and TRANSACT; execution stays non-custodial (signing in the user’s wallet, gateway only broadcasts). OpenClaw Control UI: http://localhost:18789.
-
-See **[docs/OPENCLAW_INTEGRATION.md](OPENCLAW_INTEGRATION.md)** for the full step-by-step setup guide including config file format, tool registration, WDK skill setup, and end-to-end agent conversation examples.
-
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant OC as OpenClaw
-  participant MCP as Yield_Agent_MCP
-  participant G as Gateway
-
-  U->>OC: e.g. Get portfolio for 0x...
-  OC->>MCP: tools/call get_portfolio
-  MCP->>G: GET /api/portfolio
-  G-->>MCP: portfolio JSON
-  MCP-->>OC: tool result
-  OC-->>U: natural language reply
-```
+---
 
 ## Progress states (WebSocket)
 

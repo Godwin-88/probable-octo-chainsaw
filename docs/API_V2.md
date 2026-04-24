@@ -243,7 +243,7 @@ These are the original REST routes used by the React frontend and proxied by the
 | `GET` | `/ws/progress?optimizationId=...` | WebSocket stream of optimization progress. |
 | `GET` | `/api/execute/plan/:optimizationId` | Cached optimization plan from Redis. |
 | `POST` | `/api/execute/signed` | Broadcast signed tx hex. Body: `{ signedTxHex, chainId? }`. Non-custodial. |
-| `POST` | `/api/agent/chat` | Proxy to OpenClaw when `OPENCLAW_GATEWAY_URL` is set. Body: `{ message, sessionId? }`. |
+| `POST` | `/api/agent/chat` | **(DEPRECATED)** Proxy to OpenClaw. Use LangGraph Orchestrator `/api/trade/*` instead. |
 | `GET` | `/api/transact/*` | Proxy to ai-core TRANSACT HTTP (`AI_CORE_HTTP_URL`). Used by frontend quant workspaces. |
 
 ## ai-core / TRANSACT HTTP (port 8000)
@@ -272,7 +272,7 @@ These are served by the unified Python container (gRPC :50051 + FastAPI :8000). 
 
 ## MCP server (port 3001)
 
-The Yield-Agent MCP server exposes these gateway and TRANSACT endpoints as JSON-RPC 2.0 tools for OpenClaw. **9 tools total.** See [docs/OPENCLAW_INTEGRATION.md](OPENCLAW_INTEGRATION.md) for full tool schemas and usage.
+The Yield-Agent MCP server exposes these gateway and TRANSACT endpoints as JSON-RPC 2.0 tools. While originally designed for **OpenClaw (now deprecated)**, they remain available for any MCP-compatible agent. See [docs/LANGGRAPH_ORCHESTRATOR.md](LANGGRAPH_ORCHESTRATOR.md) for the current orchestration layer.
 
 | MCP Tool | Underlying Endpoint |
 |----------|-------------------|

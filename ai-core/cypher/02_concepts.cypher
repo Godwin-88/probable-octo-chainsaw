@@ -583,12 +583,13 @@ MATCH (m:Menu {name: 'Volatility'})
 MERGE (c)-[:BELONGS_TO]->(m);
 
 MERGE (c:Concept {name: 'VIX Index'})
-  SET c.definition = 'CBOE Volatility Index; 30-day implied volatility from S&P 500 options; ''fear gauge''', c.category = 'volatility', c.difficulty = 'basic',
-      c.menu_context = 'Volatility', c.prerequisites = 'implied volatility;variance swap;market sentiment';
-MATCH (c:Concept {name: 'VIX Index'})
-MATCH (m:Menu {name: 'Volatility'})
-MERGE (c)-[:BELONGS_TO]->(m);
+  SET c.definition = "CBOE Volatility Index; 30-day implied volatility from S&P 500 options; 'fear gauge'",
+      c.category = 'volatility',
 
+      c.difficulty = 'basic',
+      c.menu_context = 'Volatility',
+      c.prerequisites = 'implied volatility;variance swap;market sentiment';
+      
 MERGE (c:Concept {name: 'Variance Risk Premium'})
   SET c.definition = 'Difference between realized and implied variance; investors pay premium for volatility protection', c.category = 'volatility', c.difficulty = 'advanced',
       c.menu_context = 'Volatility', c.prerequisites = 'variance swaps;volatility selling;risk premium';

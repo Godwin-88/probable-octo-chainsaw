@@ -2,10 +2,12 @@
 Transact Phase 1 Routes — Portfolio, Risk, Optimizer, Blotter
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from typing import Optional, List
 import numpy as np
+
+from .middleware.payments import require_micro_payment
 
 from .portfolio_engine import compute_portfolio_moments, compute_performance_metrics
 from .risk.var_engine import compute_var_all_methods
@@ -47,11 +49,7 @@ try:
     import pricing_engine
     HAS_PRICING = True
 except ImportError:
-    try:
-        import pricing_engine_mock as pricing_engine  # type: ignore
-        HAS_PRICING = True
-    except ImportError:
-        HAS_PRICING = False
+    HAS_PRICING = False
 
 router = APIRouter(prefix="", tags=["transact"])
 
@@ -167,7 +165,8 @@ class VaRRequest(BaseModel):
 
 
 @router.post("/risk/var")
-def post_risk_var(req: VaRRequest):
+@require_micro_payment(endpoint_name="quant_var", price_usdc=0.005)
+async def post_risk_var(req: VaRRequest, request: Request):
     """Compute VaR and ES for all methods (M1 L2)."""
     try:
         returns = np.array(req.returns)
@@ -355,7 +354,8 @@ class MVOFrontierRequest(BaseModel):
 
 
 @router.post("/optimize/mvo")
-def post_optimize_mvo(req: MVORequest):
+@require_micro_payment(endpoint_name="run_optimization", price_usdc=0.01)
+async def post_optimize_mvo(req: MVORequest, request: Request):
     """Mean-variance optimization (M1 L4)."""
     try:
         cov = np.array(req.covariance)

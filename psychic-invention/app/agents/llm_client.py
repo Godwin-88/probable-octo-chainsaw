@@ -21,10 +21,15 @@ logger = logging.getLogger(__name__)
 
 
 def _load_env():
-    """Best-effort .env loader (no hard dependency on python-dotenv)."""
+    """Best-effort .env loader checking multiple locations."""
     try:
         from dotenv import load_dotenv
         from pathlib import Path
+        # 1. Check project root absolute
+        load_dotenv("/home/ed/projects/probable-octo-chainsaw/.env", override=False)
+        # 2. Check current working directory
+        load_dotenv(Path.cwd() / ".env", override=False)
+        # 3. Check relative to this file
         load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env", override=False)
     except ImportError:
         pass

@@ -1,9 +1,9 @@
 {
   "info": {
     "_postman_id": "b9bf0d3d-1c3b-4e5f-8b86-0e97d6c3f2a1",
-    "name": "QuantiNova API – Full Stack (Gateway + AI Core + MCP + OpenClaw)",
+    "name": "QuantiNova API – Full Stack (Gateway + AI Core + MCP + LangGraph)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Complete API smoke-test collection for the Dynamic Yield Optimization Agent stack.\n\nCovers:\n  • Gateway REST /api (portfolio, auth, optimize, execute, agent chat)\n  • Gateway Web3-native /v2 (chains, universe, positions, oracle, pool, swap, bundles, MEV relay, opportunities, activity, autonomy)\n  • AI Core / TRANSACT HTTP (VaR, moments, explain, funding, factors, scenarios, asset search)\n  • Yield-Agent MCP Server (all 7 JSON-RPC 2.0 tools)\n  • OpenClaw agent chat proxy\n\nVariables to set before running:\n  gatewayUrl  – default http://localhost:3000\n  aiCoreUrl   – default http://localhost:8000\n  mcpUrl      – default http://localhost:3001\n  wallet      – any valid EVM address\n  optimizationId – set after running 'Optimize (start)'"
+    "description": "Complete API smoke-test collection for the Dynamic Yield Optimization Agent stack.\n\nCovers:\n  • Gateway REST /api (portfolio, auth, optimize, execute, agent chat)\n  • Gateway Web3-native /v2 (chains, universe, positions, oracle, pool, swap, bundles, MEV relay, opportunities, activity, autonomy)\n  • AI Core / TRANSACT HTTP (VaR, moments, explain, funding, factors, scenarios, asset search)\n  • Yield-Agent MCP Server (all 9 tools)\n  • LangGraph Orchestrator (:8001)\n\nVariables to set before running:\n  gatewayUrl  – default http://localhost:3000\n  aiCoreUrl   – default http://localhost:8000\n  mcpUrl      – default http://localhost:3001\n  wallet      – any valid EVM address\n  optimizationId – set after running 'Optimize (start)'"
   },
   "variable": [
     { "key": "gatewayUrl",      "value": "http://localhost:3000",                              "type": "string" },

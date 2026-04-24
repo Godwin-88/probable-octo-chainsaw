@@ -55,6 +55,7 @@ function defaultChainCatalog(): Omit<ChainConfig, "rpcUrls">[] {
     { id: "polygon", name: "Polygon", kind: "evm", chainId: "137", explorerTxBase: "https://polygonscan.com/tx/" },
     { id: "arbitrum", name: "Arbitrum", kind: "evm", chainId: "42161", explorerTxBase: "https://arbiscan.io/tx/" },
     { id: "base", name: "Base", kind: "evm", chainId: "8453", explorerTxBase: "https://basescan.org/tx/" },
+    { id: "arc-testnet", name: "Arc Testnet", kind: "evm", chainId: "11155111", explorerTxBase: "https://explorer.circle.com/" },
     { id: "solana", name: "Solana", kind: "solana", explorerTxBase: "https://solscan.io/tx/" },
     { id: "ton", name: "TON", kind: "ton", explorerTxBase: "https://tonscan.org/tx/" },
     { id: "tron", name: "TRON", kind: "tron", explorerTxBase: "https://tronscan.org/#/transaction/" },
