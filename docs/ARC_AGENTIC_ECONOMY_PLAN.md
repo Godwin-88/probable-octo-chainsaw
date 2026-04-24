@@ -63,54 +63,48 @@ sequenceDiagram
 
 ## 4. Technical Implementation Plan
 
-### Phase 1: Payment Gateway Layer (Apr 20-21)
+### Phase 1: Payment Gateway Layer (Apr 20-21) — **COMPLETED**
 Implement x402 payment gates on AI-Core endpoints.
 
-```python
-# Add to ai-core/ai_core/resilience.py or new middleware
-from circle_nanopayments import x402_verifier, ArcSettler
+**Status**: Verified implementation on `/risk/var`, `/optimize/mvo`, and `/agents/explain`.
 
-async def require_micro_payment(endpoint: str, price_usdc: float):
-    """Decorator to gate AI Core endpoints behind x402 payments"""
-    async def wrapper(request):
-        # 1. Verify x402 payment header
-        payment_valid = await x402_verifier.verify(
-            request.headers.get('X402-Payment'),
-            amount=price_usdc,
-            currency='USDC',
-            chain='arc-testnet'
-        )
-        if not payment_valid:
-            return {"error": "Payment required", "price": price_usdc}
-        
-        # 2. Execute original endpoint logic
-        result = await endpoint_handler(request)
-        
-        # 3. Log settlement telemetry for margin analysis
-        await ArcSettler.log_usage(
-            endpoint=endpoint,
-            compute_ms=result.get('compute_time', 0),
-            price_paid=price_usdc
-        )
-        return result
-    return wrapper
+#### Verification & Testing
+To verify the payment gates, use the following curl commands:
+
+1. **Test Missing Payment Header (Expect 402)**:
+   ```bash
+   curl -X POST http://localhost:8000/risk/var -H "Content-Type: application/json" -d '{"returns": [[0.01, -0.02], [0.005, 0.01]]}'
+   ```
+
+2. **Test Valid Payment (Expect 200 with receipt)**:
+   ```bash
+   curl -X POST http://localhost:8000/risk/var -H "Content-Type: application/json" -H "X402-Payment: pay_demo_123" -d '{"returns": [[0.01, -0.02], [0.005, 0.01]], "weights": [0.5, 0.5]}'
+   ```
+
+3. **Check Logs**:
+   Verify `[ArcSettler] Settlement` logs appear in the `ai-core` console output.
+
+```python
+# Implementation located in psychic-invention/app/middleware/payments.py
 ```
 
-### Phase 2: Agent Reputation Graph (Apr 22)
+### Phase 2: Agent Reputation Graph (Apr 22) — **COMPLETED**
 Extend Neo4j schema for ERC-8004 alignment.
 
-```cypher
-// Extend Neo4j schema for ERC-8004 alignment
-CREATE CONSTRAINT IF NOT EXISTS FOR (a:Agent) REQUIRE a.did IS UNIQUE;
+**Status**: Implemented in `ai-core/cypher/18_agent_reputation.cypher` and integrated into `seed_graph.sh`.
 
-// Link academic research to agent trust scores
-MATCH (r:ResearchPaper {citations: $n})
-MATCH (a:Agent {name: $agent_name})
-MERGE (a)-[:CITES {weight: log($n+1)}]->(r)
-SET a.reputation_score = 
-  0.4 * a.signal_accuracy + 
-  0.3 * log(a.citations + 1) + 
-  0.3 * a.uptime_ratio;
+#### Reputation Components
+The following nodes and properties are now available in the Knowledge Graph:
+- **(a:Agent)**: Stores `did`, `signal_accuracy`, `uptime_ratio`, `citations`, and `reputation_score`.
+- **(r:ResearchPaper)**: Stores `citations`, `domain`, and `title`.
+- **[:CITES]**: Links agents to the academic foundation that validates their trust score.
+
+#### Verification
+To verify the reputation graph, run this Cypher query:
+```cypher
+MATCH (a:Agent)
+RETURN a.name, a.reputation_score, a.role
+ORDER BY a.reputation_score DESC;
 ```
 
 ### Phase 3: Margin Analysis Engine (Apr 23)

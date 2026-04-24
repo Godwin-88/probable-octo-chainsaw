@@ -44,6 +44,15 @@ echo ""
 echo "[Phase 2] Cross-Domain Wiring"
 cypher /cypher/14_cross_domain_relationships.cypher
 cypher /cypher/15_source_citations.cypher
+cypher /cypher/16_algorithmic_trading_ingest.cypher
+
+echo ""
+echo "[Phase 3] External Integrations"
+cypher /cypher/17_kraken_knowledge.cypher
+
+echo ""
+echo "[Phase 4] Hackathon Economy (ERC-8004)"
+cypher /cypher/18_agent_reputation.cypher
 
 echo ""
 echo "=== Seeding complete ==="
