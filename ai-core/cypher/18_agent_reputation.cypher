@@ -33,14 +33,14 @@ SET k3.title = 'Hierarchical Risk Parity on Chain',
 
 // 3. Seed Agents
 MERGE (a1:Agent {did: 'did:arc:agent_research_specialist'})
-SET a1.name = 'Research Agent', 
+SET a1.name = 'Curator Agent', 
     a1.signal_accuracy = 0.92, 
     a1.uptime_ratio = 0.995, 
     a1.citations = 120500,
     a1.role = 'Specialist';
 
 MERGE (a2:Agent {did: 'did:arc:agent_trading_executor'})
-SET a2.name = 'Trading Agent', 
+SET a2.name = 'Trader Agent', 
     a2.signal_accuracy = 0.88, 
     a2.uptime_ratio = 0.98, 
     a2.citations = 500,

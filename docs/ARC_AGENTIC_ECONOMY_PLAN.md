@@ -20,10 +20,10 @@ We will integrate **Circle Nanopayments** and **Arc L1** to enable:
 | Current Component | Hackathon Requirement | Adaptation Strategy |
 |----------------------|----------------------|-------------------|
 | **Neo4j Knowledge Graph** | ERC-8004 trust layer for agents | Map academic citations + signal performance → on-chain reputation scores |
-| **AI Core (GraphRAG + RL)** | Per-action pricing ≤$0.01 | Wrap `/quant_var`, `/explain_formula`, `/run_optimization` with x402 payment gates |
+| **AI Core (GraphRAG + RL)** | Per-action pricing ≤$0.01 | Wrap endpoints with x402 payment gates |
 | **WDK Wallet Infrastructure** | Circle Wallets + USDC settlement | Add Circle Wallet SDK alongside WDK; route micro-payments to Arc |
-| **MCP Server Tools** | Agent-to-Agent payment loops | Enable tools to *request payment* before execution (e.g., `get_optimization_plan?pay=0.005USDC`) |
-| **Kraken/CEX Integration** | Usage-based compute billing | Charge per signal generation, per backtest, per execution simulation |
+| **MCP Server Tools** | Agent-to-Agent payment loops | Enable **Manager Agent** to pay **Curator Agent** (e.g., `ingest_source?pay=0.005USDC`) |
+| **Kraken/CEX Integration** | Usage-based compute billing | Charge per signal generation, settled via **Trader Agent** wallet |
 | **Redis Cache + WebSocket** | 50+ high-freq tx demo | Instrument every cache miss / signal request as a billable micro-event |
 
 ---
@@ -34,29 +34,26 @@ We will integrate **Circle Nanopayments** and **Arc L1** to enable:
 Why this wins:
 ✅ Leverages your Neo4j graph for trust/reputation (ERC-8004 alignment)
 ✅ Uses your existing AI Core endpoints as monetizable primitives
-✅ Demonstrates M2M commerce: research agent → trading agent → execution agent
+✅ Demonstrates M2M commerce: Manager Agent → Curator Agent → Trader Agent
 ✅ Financial engineering angle: margin analysis vs. traditional gas
 ```
 
 ### Core Flow
 ```mermaid
 sequenceDiagram
-    participant UserAgent as User Agent
-    participant ResearchAgent as Research Agent (Neo4j+GraphRAG)
-    participant TradingAgent as Trading Agent (AI Core)
-    participant Arc as Arc L1 + Nanopayments
+    participant User
+    participant Manager as Manager Agent
+    participant Curator as Curator Agent (Neo4j)
+    participant Trader as Trader Agent (AI Core)
+    participant Arc as Arc L1 + Circle Wallets
     
-    UserAgent->>ResearchAgent: Request: "Explain VaR formula with citations"
-    ResearchAgent->>Arc: Check payment via x402 ($0.003 USDC)
-    Arc-->>ResearchAgent: Payment verified
-    ResearchAgent->>Neo4j: Retrieve formula + PDF citations [N]
-    ResearchAgent->>UserAgent: Response + citation badges
-    
-    UserAgent->>TradingAgent: Request: "Run optimization for ETH-USDC"
-    TradingAgent->>Arc: Micro-payment for compute ($0.007 USDC)
-    TradingAgent->>AI Core: Execute GraphRAG + risk calculation
-    TradingAgent->>Arc: Settlement + usage telemetry
-    TradingAgent->>UserAgent: Optimization plan + margin report
+    User->>Manager: Request: "Analyze this strategy with citations"
+    Manager->>Arc: Pay Curator Agent ($0.005 USDC)
+    Arc-->>Manager: Payment verified (sponsored gas)
+    Curator->>Neo4j: Retrieve formula + PDF citations
+    Manager->>Arc: Pay Trader Agent for compute ($0.007 USDC)
+    Trader->>AI Core: Execute Risk + Optimization
+    Trader->>User: Optimization plan + On-Chain Receipt
 ```
 
 ---

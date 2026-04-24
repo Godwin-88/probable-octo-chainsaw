@@ -187,14 +187,14 @@ def seed_agent_reputation(driver) -> None:
         # Agents
         session.run("""
             MERGE (a:Agent {did: 'did:arc:agent_quant_nova'})
-            SET a.name = 'QuantiNova Manager', a.signal_accuracy = 0.85, a.uptime_ratio = 0.99, 
+            SET a.name = 'Manager Agent', a.signal_accuracy = 0.85, a.uptime_ratio = 0.99, 
                 a.citations = 120500, a.walletId = 'wallet_arc_manager_001',
                 a.walletAddress = '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'
         """)
         
         session.run("""
             MERGE (a:Agent {did: 'did:arc:agent_research_specialist'})
-            SET a.name = 'Research Agent', a.signal_accuracy = 0.92, a.uptime_ratio = 0.995, 
+            SET a.name = 'Curator Agent', a.signal_accuracy = 0.92, a.uptime_ratio = 0.995, 
                 a.citations = 120500, a.walletId = 'wallet_arc_curator_002',
                 a.walletAddress = '0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199'
         """)
