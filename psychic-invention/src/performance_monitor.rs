@@ -136,8 +136,8 @@ impl PerformanceMonitor {
     }
 }
 
-/// Global performance monitor instance
 lazy_static::lazy_static! {
+    /// Global performance monitor instance
     static ref GLOBAL_MONITOR: PerformanceMonitor = PerformanceMonitor::new();
 }
 

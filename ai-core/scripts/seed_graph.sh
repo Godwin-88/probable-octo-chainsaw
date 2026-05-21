@@ -13,6 +13,10 @@ BOLT="${NEO4J_BOLT_URL:-bolt://neo4j:7687}"
 
 cypher() {
   local file="$1"
+  if [ ! -f "$file" ]; then
+    echo "  ! File not found: $file (skipping)"
+    return 0
+  fi
   echo "  → $(basename "$file")"
   cypher-shell -a "$BOLT" -u "$NEO4J_USER" -p "$NEO4J_PASS" --file "$file"
 }
@@ -21,13 +25,13 @@ echo "=== QuantiNova Knowledge Graph Seeder ==="
 echo "Target: $BOLT"
 echo ""
 
-echo "[Phase 0] Foundation (psychic-invention M1–M7)"
-cypher /psychic-import/01_menus.cypher
-cypher /psychic-import/02_concepts.cypher
-cypher /psychic-import/03_formulas.cypher
-cypher /psychic-import/04_metrics_interpretations.cypher
-cypher /psychic-import/05_relationships.cypher
-cypher /psychic-import/06_trading_strategies.cypher
+echo "[Phase 0] Foundation"
+cypher /cypher/01_menus.cypher
+cypher /cypher/02_concepts.cypher
+cypher /cypher/03_formulas.cypher
+cypher /cypher/04_metrics_interpretations.cypher
+cypher /cypher/05_relationships.cypher
+cypher /cypher/06_trading_strategies.cypher
 
 echo ""
 echo "[Phase 1] DeFi/Web3 Extension"

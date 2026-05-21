@@ -29,6 +29,10 @@ transactProxyRouter.use(async (req: Request, res: Response) => {
   const headers: Record<string, string> = {
     "Content-Type": req.headers["content-type"] || "application/json",
   };
+  // Pass through the payment header from the frontend
+  if (req.headers["x402-payment"]) {
+    headers["X402-Payment"] = req.headers["x402-payment"] as string;
+  }
   const forwardHeaders = ["accept", "authorization"];
   for (const h of forwardHeaders) {
     const v = req.headers[h];

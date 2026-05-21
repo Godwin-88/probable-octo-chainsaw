@@ -1,0 +1,13 @@
+.git
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.env
+venv
+node_modules
+psychic-invention/knowledge_base/import
+psychic-invention/target
+ai-core/venv
+ai-core/build
+ai-core/dist

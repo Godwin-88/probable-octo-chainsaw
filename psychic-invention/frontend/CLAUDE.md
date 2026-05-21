@@ -111,7 +111,7 @@ VITE_ENABLE_DEMO=true
 
 | Issue | Fix |
 |-------|-----|
-| CORS error | Ensure backend is running on port 8000 and frontend on 3000 |
+| CORS error | Ensure backend is running on port 8000 and frontend on 5173 |
 | 404 on API call | Check `VITE_API_URL` in `.env`; run `npm run dev` not `npm run build` |
 | Type error on response | Update interface in `src/types/index.ts` to match actual API shape |
 | Chart not rendering | Verify data arrays are non-empty; add loading/empty-state guards |

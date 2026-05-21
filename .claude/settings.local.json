@@ -29,7 +29,10 @@
       "Bash(python -c \"import ast; ast.parse\\(open\\(''manim_animations/ep10_hrp.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''Syntax OK''\\)\")",
       "WebSearch",
       "Bash(python -c \"import ast; ast.parse\\(open\\(''manim_animations/ep11_uniswap_amm.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''Syntax OK''\\)\")",
-      "Bash(python -c \"import ast; ast.parse\\(open\\(''manim_animations/ep12_impermanent_loss.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''Syntax OK''\\)\")"
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''manim_animations/ep12_impermanent_loss.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''Syntax OK''\\)\")",
+      "Bash(xargs -I {} basename {})",
+      "Bash(python -c \"from app.routers.trading import router; print\\('trading router OK'\\)\")",
+      "Bash(python3 -c \"from app.routers.trading import router; print\\('trading router OK'\\)\")"
     ]
   }
 }

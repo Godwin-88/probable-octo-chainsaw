@@ -29,7 +29,7 @@ def _get_config():
     return {
         "uri": os.getenv("NEO4J_URI", "bolt://localhost:7687"),
         "user": os.getenv("NEO4J_USER", "neo4j"),
-        "password": os.getenv("NEO4J_PASSWORD", "pricing-engine-kb"),
+        "password": os.getenv("NEO4J_PASSWORD", "yield-agent-dev"),
     }
 
 

@@ -57,12 +57,12 @@ Available tools (call ONE at a time):
 - explain_concept(name: str)  — get concept definition and domain
 - suggest_strategies(query: str) — find relevant trading strategies
 
-To call a tool, output EXACTLY:
+To call a tool, you MUST output exactly:
 Action: <tool_name>(<argument>)
 
 After each observation, continue thinking or emit your final answer.
-When done, output:
-Final Answer: <your complete response>
+When you are ready to give the user the final result, you MUST start your response with "Final Answer:".
+Do NOT just say "Done" or "I have finished". Always provide a helpful, detailed response in your Final Answer.
 """.strip()
 
 

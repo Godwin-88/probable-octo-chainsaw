@@ -146,22 +146,32 @@ class OllamaClient:
             return False
 
 
-# ── Groq client (remote, OpenAI-compatible) ───────────────────────────────────
+# ── Unified OpenAI-compatible client (Groq, Gaia, Galadriel, etc.) ────────────
 
 
-def _get_groq_config() -> Dict[str, Any]:
+def _get_llm_config() -> Dict[str, Any]:
     _load_env()
-    api_key = os.getenv("GROQ_API_KEY") or ""
-    model = os.getenv("GROQ_MODEL", "llama3-8b-8192")
-    base = (os.getenv("GROQ_API_BASE") or "https://api.groq.com/openai/v1").rstrip("/")
-    return {"api_key": api_key, "model": model, "base": base, "timeout": float(os.getenv("GROQ_TIMEOUT", "60"))}
+    # Support generic LLM_* env vars for easier sponsor integration
+    provider = os.getenv("LLM_PROVIDER", "groq").lower()
+    api_key = os.getenv("LLM_API_KEY") or os.getenv("GROQ_API_KEY") or ""
+    model = os.getenv("LLM_MODEL") or os.getenv("GROQ_MODEL") or "llama3-8b-8192"
+    base = (os.getenv("LLM_API_BASE") or os.getenv("GROQ_API_BASE") or "https://api.groq.com/openai/v1").rstrip("/")
+    timeout = float(os.getenv("LLM_TIMEOUT") or os.getenv("GROQ_TIMEOUT") or "60")
+    
+    return {
+        "api_key": api_key,
+        "model": model,
+        "base": base,
+        "timeout": timeout,
+        "provider": provider
+    }
 
 
-class GroqClient:
-    """Groq Cloud client using OpenAI-compatible /chat/completions API."""
+class OpenAICompatibleClient:
+    """Generic client for any OpenAI-compatible /chat/completions API."""
 
     def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None, base_url: Optional[str] = None):
-        cfg = _get_groq_config()
+        cfg = _get_llm_config()
         self._api_key = api_key or cfg["api_key"]
         self._model = model or cfg["model"]
         self._base = (base_url or cfg["base"]).rstrip("/")
@@ -175,15 +185,62 @@ class GroqClient:
         model: Optional[str] = None,
         stream_callback: Optional[Callable[[str], None]] = None,
     ) -> str:
-        """Call Groq /chat/completions and return the assistant text."""
+        """Call /chat/completions and return the assistant text."""
         if not self._api_key:
-            raise RuntimeError("GROQ_API_KEY is not set")
-        if stream_callback is not None:
-            # For now, do non-streaming and send the full text at once.
-            text = self._generate_sync(prompt, system, temperature, model)
-            stream_callback(text)
-            return text
-        return self._generate_sync(prompt, system, temperature, model)
+            raise RuntimeError("LLM API key not set (set LLM_API_KEY or GROQ_API_KEY)")
+        
+        url = f"{self._base}/chat/completions"
+        m = model or self._model
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+        
+        payload = {
+            "model": m,
+            "messages": messages,
+            "temperature": float(temperature),
+            "stream": stream_callback is not None,
+        }
+
+        try:
+            if stream_callback:
+                return self._generate_stream(url, payload, stream_callback)
+            return self._generate_sync(url, payload)
+        except Exception as e:
+            logger.error("LLM request failed: %s", e)
+            raise
+
+    def _generate_sync(self, url: str, payload: dict) -> str:
+        r = requests.post(url, headers=self._headers(), json=payload, timeout=self._timeout)
+        r.raise_for_status()
+        data = r.json()
+        try:
+            return (data["choices"][0]["message"]["content"] or "").strip()
+        except (KeyError, IndexError):
+            logger.warning("Unexpected LLM response schema: %s", data)
+            return ""
+
+    def _generate_stream(self, url: str, payload: dict, callback: Callable[[str], None]) -> str:
+        full: list[str] = []
+        r = requests.post(url, headers=self._headers(), json=payload, timeout=self._timeout, stream=True)
+        r.raise_for_status()
+        
+        for line in r.iter_lines(decode_unicode=True):
+            if not line: continue
+            if line.startswith("data: "):
+                data_str = line[6:].strip()
+                if data_str == "[DONE]": break
+                try:
+                    chunk = json.loads(data_str)
+                    delta = chunk["choices"][0].get("delta", {})
+                    content = delta.get("content", "")
+                    if content:
+                        full.append(content)
+                        callback(content)
+                except Exception:
+                    continue
+        return "".join(full)
 
     def _headers(self) -> Dict[str, str]:
         return {
@@ -191,45 +248,19 @@ class GroqClient:
             "Content-Type": "application/json",
         }
 
-    def _generate_sync(
-        self,
-        prompt: str,
-        system: Optional[str],
-        temperature: float,
-        model: Optional[str] = None,
-    ) -> str:
-        url = f"{self._base}/chat/completions"
-        m = model or self._model
-        messages = []
-        if system:
-            messages.append({"role": "system", "content": system})
-        messages.append({"role": "user", "content": prompt})
-        payload = {
-            "model": m,
-            "messages": messages,
-            "temperature": float(temperature),
-            "stream": False,
-        }
-        r = requests.post(url, headers=self._headers(), json=payload, timeout=self._timeout)
-        r.raise_for_status()
-        data = r.json()
-        try:
-            return (data["choices"][0]["message"]["content"] or "").strip()
-        except (KeyError, IndexError):
-            logger.warning("Unexpected Groq response schema: %s", data)
-            return ""
-
     def health_check(self) -> bool:
-        """Basic health check by listing models."""
-        if not self._api_key:
-            return False
+        if not self._api_key: return False
         try:
-            url = f"{self._base}/models"
-            r = requests.get(url, headers=self._headers(), timeout=10.0)
+            # Try to list models as a generic health check
+            r = requests.get(f"{self._base}/models", headers=self._headers(), timeout=10.0)
             return r.status_code == 200
-        except Exception as e:
-            logger.warning("Groq health_check failed at %s: %s", self._base, e)
+        except Exception:
             return False
+
+
+# Keep GroqClient for backward compatibility if needed, but point it to the new unified class
+class GroqClient(OpenAICompatibleClient):
+    pass
 
 
 # ── Factory ───────────────────────────────────────────────────────────────────
@@ -240,13 +271,13 @@ def get_llm_client():
     Return the default LLM client based on environment configuration.
 
     Precedence:
-    - If GROQ_API_KEY is set → GroqClient
-    - Else → OllamaClient
+    1. If LLM_API_KEY or GROQ_API_KEY is set → OpenAICompatibleClient (Groq, Gaia, Galadriel, etc.)
+    2. Else → OllamaClient
     """
-    _load_env()
-    groq_key = os.getenv("GROQ_API_KEY") or ""
-    if groq_key:
-        logger.info("Using GroqClient for agent LLM")
-        return GroqClient()
+    cfg = _get_llm_config()
+    if cfg["api_key"]:
+        logger.info("Using OpenAI-compatible client for agent LLM (Base: %s, Model: %s)", cfg["base"], cfg["model"])
+        return OpenAICompatibleClient()
+    
     logger.info("Using OllamaClient for agent LLM")
     return OllamaClient()

@@ -55,7 +55,7 @@ pub fn cf_heston(
     tau: f64,
 ) -> PyResult<PyObject> {
     let cf = cf_heston_impl(u, s, v0, r, kappa, theta, xi, rho, tau);
-    let py_c = PyComplex::from_doubles(py, cf.re, cf.im);
+    let py_c = PyComplex::from_doubles_bound(py, cf.re, cf.im);
     Ok(py_c.into_py(py))
 }
 

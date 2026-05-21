@@ -1,10 +1,7 @@
 use pyo3::prelude::*;
-use statrs::distribution::{Normal, ContinuousCDF};
-use std::sync::Arc;
 use rayon::prelude::*;
 
 // Pre-computed constants for optimization
-const SQRT_2PI: f64 = 2.5066282746310005024;
 const INV_SQRT_2PI: f64 = 0.3989422804014326779;
 
 /// Optimized normal CDF approximation for hot path performance

@@ -11,7 +11,7 @@ import os
 def get_driver():
     uri = os.environ.get("NEO4J_URI", "bolt://localhost:7687")
     user = os.environ.get("NEO4J_USER", "neo4j")
-    password = os.environ.get("NEO4J_PASSWORD", "pricing-engine-kb")
+    password = os.environ.get("NEO4J_PASSWORD", "yield-agent-dev")
     return GraphDatabase.driver(uri, auth=(user, password))
 
 
